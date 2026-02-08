@@ -105,16 +105,20 @@ alter table public.quotes enable row level security;
 alter table public.embeddings enable row level security;
 
 -- Per-user policies
-create policy if not exists "items: user can CRUD own" on public.items
+drop policy if exists "items: user can CRUD own" on public.items;
+create policy "items: user can CRUD own" on public.items
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy if not exists "jobs: user can CRUD own" on public.jobs
+drop policy if exists "jobs: user can CRUD own" on public.jobs;
+create policy "jobs: user can CRUD own" on public.jobs
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy if not exists "tags: user can CRUD own" on public.tags
+drop policy if exists "tags: user can CRUD own" on public.tags;
+create policy "tags: user can CRUD own" on public.tags
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy if not exists "item_tags: user can CRUD via item ownership" on public.item_tags
+drop policy if exists "item_tags: user can CRUD via item ownership" on public.item_tags;
+create policy "item_tags: user can CRUD via item ownership" on public.item_tags
   for all using (
     exists (
       select 1 from public.items i
@@ -127,8 +131,10 @@ create policy if not exists "item_tags: user can CRUD via item ownership" on pub
     )
   );
 
-create policy if not exists "quotes: user can CRUD own" on public.quotes
+drop policy if exists "quotes: user can CRUD own" on public.quotes;
+create policy "quotes: user can CRUD own" on public.quotes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy if not exists "embeddings: user can CRUD own" on public.embeddings
+drop policy if exists "embeddings: user can CRUD own" on public.embeddings;
+create policy "embeddings: user can CRUD own" on public.embeddings
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
