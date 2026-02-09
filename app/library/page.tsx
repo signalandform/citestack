@@ -9,6 +9,7 @@ import { CollectionPicker } from '@/app/components/collection-picker';
 import { CoverageBadge } from '@/app/components/coverage-badge';
 import { OnboardingBanner } from '@/app/components/onboarding';
 import { useToast } from '@/app/contexts/toast';
+import { getItemDisplayTitle } from '@/lib/item-display';
 
 type Item = {
   id: string;
@@ -169,13 +170,13 @@ function LibraryContent() {
             placeholder="Search by title or summary…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="filter-input w-full px-3 py-2"
           />
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-2 py-1.5 text-sm text-[var(--fg-default)]"
+              className="filter-select px-2 py-1.5"
             >
               <option value="">Status: All</option>
               <option value="processing">Processing</option>
@@ -185,7 +186,7 @@ function LibraryContent() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-2 py-1.5 text-sm text-[var(--fg-default)]"
+              className="filter-select px-2 py-1.5"
             >
               <option value="">Type: All</option>
               <option value="url">URL</option>
@@ -197,7 +198,7 @@ function LibraryContent() {
               placeholder="Domain…"
               value={domainFilter}
               onChange={(e) => setDomainFilter(e.target.value)}
-              className="w-28 rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-2 py-1.5 text-sm text-[var(--fg-default)] placeholder:text-[var(--fg-muted)]"
+              className="filter-input w-28 px-2 py-1.5"
             />
             <select
               value={collectionFilter}
@@ -209,7 +210,7 @@ function LibraryContent() {
                 else params.delete('collection');
                 router.push(`/library${params.toString() ? '?' + params : ''}`);
               }}
-              className="rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-2 py-1.5 text-sm text-[var(--fg-default)]"
+              className="filter-select px-2 py-1.5"
             >
               <option value="">Collection: All</option>
               {collections.map((c) => (
@@ -248,7 +249,7 @@ function LibraryContent() {
                     }
                   }
                 }}
-                className="w-32 rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-2 py-1.5 text-sm text-[var(--fg-default)] placeholder:text-[var(--fg-muted)]"
+                className="filter-input w-32 px-2 py-1.5"
               />
               <button
                 type="button"
@@ -388,7 +389,7 @@ function LibraryContent() {
                     className="block flex-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-3 text-sm transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]"
                   >
                     <div className="font-medium text-[var(--fg-default)]">
-                      {item.title || item.id.slice(0, 8) + '…'}
+                      {getItemDisplayTitle(item)}
                     </div>
                     {snippetDisplay && (
                       <p className="mt-1 text-[var(--fg-muted)]">{snippetDisplay}</p>

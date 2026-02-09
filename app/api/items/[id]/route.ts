@@ -50,3 +50,49 @@ export async function GET(
     collection_ids: collectionIds,
   });
 }
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getUser();
+  if (!user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  let body: { title?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const title =
+    typeof body.title === 'string'
+      ? body.title.trim().slice(0, 500) || null
+      : undefined;
+
+  if (title === undefined) {
+    return NextResponse.json({ error: 'title is required' }, { status: 400 });
+  }
+
+  const admin = supabaseAdmin();
+  const { data: item, error } = await admin
+    .from('items')
+    .update({
+      title,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select('id, title')
+    .single();
+
+  if (error || !item) {
+    return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+  }
+
+  return NextResponse.json(item);
+}

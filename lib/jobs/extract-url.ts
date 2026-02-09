@@ -55,6 +55,7 @@ export async function runExtractUrl(
   }
 
   let cleanedText = '';
+  let extractedTitle: string | null = null;
   try {
     const { document } = parseHTML(html);
 
@@ -65,6 +66,7 @@ export async function runExtractUrl(
 
     const reader = new Readability(document);
     const article = reader.parse();
+    extractedTitle = article?.title?.trim() || null;
     cleanedText = article?.textContent?.trim() ?? '';
     if (!cleanedText) {
       const body = document.body?.textContent?.trim() ?? '';
@@ -94,6 +96,7 @@ export async function runExtractUrl(
       extracted_at: now,
       updated_at: now,
       ...(domain && { domain }),
+      ...(extractedTitle && { title: extractedTitle.slice(0, 500) }),
     })
     .eq('id', itemId);
 

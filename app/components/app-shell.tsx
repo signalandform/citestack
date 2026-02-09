@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Sidebar } from './sidebar';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -35,9 +36,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div>
-      <header className="border-b border-[var(--border-default)] bg-[var(--bg-default)]">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-3">
+    <div className="flex min-h-screen">
+      <Suspense fallback={<aside className="w-[200px] shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-inset)]" />}>
+        <Sidebar />
+      </Suspense>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-b border-[var(--border-default)] bg-[var(--bg-default)]">
+          <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-3">
           <Link href="/library" className="text-sm font-semibold text-[var(--fg-default)] hover:text-[var(--accent)]">
             Citestack
           </Link>
@@ -56,9 +61,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Sign out
             </button>
           </nav>
-        </div>
-      </header>
-      {children}
+          </div>
+        </header>
+        {children}
+      </div>
     </div>
   );
 }

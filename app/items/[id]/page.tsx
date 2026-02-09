@@ -8,6 +8,7 @@ import { CollectionPicker } from '@/app/components/collection-picker';
 import { CoverageBadge } from '@/app/components/coverage-badge';
 import { OnboardingHighlight } from '@/app/components/onboarding';
 import { useToast } from '@/app/contexts/toast';
+import { getItemDisplayTitle } from '@/lib/item-display';
 
 type Quote = { id: string; quote: string; why_it_matters: string | null };
 type Item = {
@@ -50,6 +51,9 @@ export default function ItemDetailPage() {
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
   const [collections, setCollections] = useState<{ id: string; name: string }[]>([]);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleEditValue, setTitleEditValue] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLDivElement>(null);
 
   const fetchCollections = useCallback(() => {
@@ -63,16 +67,40 @@ export default function ItemDetailPage() {
     fetchCollections();
   }, [fetchCollections]);
 
+  function startEditTitle() {
+    setTitleEditValue(getItemDisplayTitle(item!));
+    setEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 0);
+  }
+
+  async function saveTitle() {
+    if (!id || !item) return;
+    const trimmed = titleEditValue.trim();
+    setEditingTitle(false);
+    if (trimmed === getItemDisplayTitle(item)) return;
+    try {
+      const res = await fetch(`/api/items/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: trimmed || null }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setItem((prev) => (prev ? { ...prev, title: data.title } : null));
+        showToast('Title updated', 'success');
+      }
+    } catch {
+      showToast('Failed to update title', 'error');
+    }
+  }
+
   function formatCitation(): string {
     if (!item) return '';
-    if (item.source_type === 'url') {
-      const label = item.title || item.domain || 'Source';
-      return `(Source: ${label}${item.url ? `, ${item.url}` : ''})`;
+    const label = getItemDisplayTitle(item);
+    if (item.source_type === 'url' && item.url) {
+      return `(Source: ${label}, ${item.url})`;
     }
-    if (item.source_type === 'file' && item.original_filename) {
-      return `(Source: ${item.original_filename})`;
-    }
-    return '(Source: note)';
+    return `(Source: ${label})`;
   }
 
   function handleQuoteClick(quote: string) {
@@ -309,9 +337,39 @@ export default function ItemDetailPage() {
           )}
         </section>
 
-        <h1 className="text-xl font-semibold text-[var(--fg-default)]">
-          {item.title || item.original_filename || item.domain || item.id.slice(0, 8) + '…'}
-        </h1>
+        <div className="flex items-center gap-2">
+          {editingTitle ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={titleEditValue}
+              onChange={(e) => setTitleEditValue(e.target.value)}
+              onBlur={saveTitle}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveTitle();
+                if (e.key === 'Escape') {
+                  setEditingTitle(false);
+                  setTitleEditValue('');
+                }
+              }}
+              className="filter-input flex-1 px-2 py-1 text-xl font-semibold"
+            />
+          ) : (
+            <h1 className="text-xl font-semibold text-[var(--fg-default)]">
+              {getItemDisplayTitle(item)}
+            </h1>
+          )}
+          {!editingTitle && (
+            <button
+              type="button"
+              onClick={startEditTitle}
+              className="text-sm text-[var(--fg-muted)] hover:text-[var(--fg-default)]"
+              title="Edit title"
+            >
+              Edit
+            </button>
+          )}
+        </div>
 
         {/* Tags under title */}
         <div className="mt-2 flex flex-wrap items-center gap-2">
