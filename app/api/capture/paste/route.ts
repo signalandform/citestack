@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUser } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { enqueueEnrichItem } from '@/lib/jobs/enqueue-enrich';
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -43,27 +44,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: job, error: jobError } = await admin
-    .from('jobs')
-    .insert({
-      user_id: user.id,
-      item_id: item.id,
-      type: 'enrich_item',
-      payload: { itemId: item.id },
-      status: 'queued',
-    })
-    .select('id')
-    .single();
-
-  if (jobError) {
+  try {
+    const { jobId } = await enqueueEnrichItem(admin, user.id, item.id);
+    return NextResponse.json(
+      { itemId: item.id, jobId },
+      { status: 201 }
+    );
+  } catch {
     return NextResponse.json(
       { error: 'Could not enqueue job' },
       { status: 500 }
     );
   }
-
-  return NextResponse.json(
-    { itemId: item.id, jobId: job?.id },
-    { status: 201 }
-  );
 }

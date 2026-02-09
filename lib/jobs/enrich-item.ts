@@ -33,6 +33,21 @@ function parseEnrichResponse(text: string): EnrichPayload | null {
   }
 }
 
+async function setItemFailed(
+  admin: SupabaseClient,
+  itemId: string,
+  msg: string
+): Promise<void> {
+  await admin
+    .from('items')
+    .update({
+      status: 'failed',
+      error: msg,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', itemId);
+}
+
 export async function runEnrichItem(
   admin: SupabaseClient,
   jobId: string,
@@ -50,7 +65,17 @@ export async function runEnrichItem(
   if (itemErr || !item) return { error: 'Item not found' };
 
   const text = item.cleaned_text?.trim() ?? '';
-  if (!text) return { error: 'Item has no text to enrich' };
+  if (!text) {
+    const msg = 'Item has no text to enrich';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
+
+  if (text.length < 500) {
+    const msg = 'Not enough extracted text to summarize';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
 
   const truncated = text.slice(0, 120_000);
   let payloadResult: EnrichPayload | null = null;
@@ -66,17 +91,24 @@ export async function runEnrichItem(
       response_format: { type: 'json_object' },
     });
     const content = completion.choices[0]?.message?.content;
-    if (!content) return { error: 'Empty OpenAI response' };
+    if (!content) {
+      const msg = 'Empty OpenAI response';
+      await setItemFailed(admin, itemId, msg);
+      return { error: msg };
+    }
     payloadResult = parseEnrichResponse(content);
     if (!payloadResult) {
       try {
         payloadResult = JSON.parse(content) as EnrichPayload;
       } catch {
-        return { error: 'Could not parse OpenAI response' };
+        const msg = 'Could not parse OpenAI response';
+        await setItemFailed(admin, itemId, msg);
+        return { error: msg };
       }
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'OpenAI request failed';
+    await setItemFailed(admin, itemId, msg);
     return { error: msg };
   }
 
@@ -85,6 +117,7 @@ export async function runEnrichItem(
 
   const updates: Record<string, unknown> = {
     status: 'enriched',
+    error: null,
     updated_at: new Date().toISOString(),
   };
   if (summary) updates.summary = summary;
@@ -95,7 +128,13 @@ export async function runEnrichItem(
     .update(updates)
     .eq('id', itemId);
 
-  if (updateItemErr) return { error: 'Could not update item' };
+  if (updateItemErr) {
+    const msg = 'Could not update item';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
+
+  await admin.from('quotes').delete().eq('item_id', itemId);
 
   for (const q of quotes) {
     if (!q.quote?.trim()) continue;

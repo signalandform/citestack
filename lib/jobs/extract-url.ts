@@ -1,6 +1,7 @@
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { enqueueEnrichItem } from './enqueue-enrich';
 
 const FETCH_TIMEOUT_MS = 15000;
 
@@ -63,13 +64,7 @@ export async function runExtractUrl(
 
   if (updateErr) return { error: 'Could not update item' };
 
-  await admin.from('jobs').insert({
-    user_id: item.user_id,
-    item_id: itemId,
-    type: 'enrich_item',
-    payload: { itemId },
-    status: 'queued',
-  });
+  await enqueueEnrichItem(admin, item.user_id, itemId);
 
   return {};
 }

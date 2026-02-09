@@ -25,6 +25,13 @@ async function runJobs(request: Request) {
 
   const admin = supabaseAdmin();
 
+  const stuckThreshold = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  await admin
+    .from('jobs')
+    .update({ status: 'queued', started_at: null })
+    .eq('status', 'running')
+    .lt('started_at', stuckThreshold);
+
   const { data: queued } = await admin
     .from('jobs')
     .select('id, user_id, item_id, type, payload')
@@ -39,17 +46,8 @@ async function runJobs(request: Request) {
 
   const claimed: string[] = [];
   for (const row of queued) {
-    const { data: updated } = await admin
-      .from('jobs')
-      .update({
-        status: 'running',
-        started_at: new Date().toISOString(),
-      })
-      .eq('id', row.id)
-      .eq('status', 'queued')
-      .select('id')
-      .single();
-    if (updated?.id) claimed.push(updated.id);
+    const { data: claimedOk } = await admin.rpc('claim_job', { p_id: row.id });
+    if (claimedOk) claimed.push(row.id);
   }
 
   const jobsToRun = queued.filter((j) => claimed.includes(j.id));

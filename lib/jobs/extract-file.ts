@@ -1,5 +1,6 @@
 import mammoth from 'mammoth';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { enqueueEnrichItem } from './enqueue-enrich';
 
 async function extractPdf(buffer: Buffer): Promise<string> {
   const { PDFParse } = await import('pdf-parse');
@@ -72,13 +73,7 @@ export async function runExtractFile(
 
   if (updateErr) return { error: 'Could not update item' };
 
-  await admin.from('jobs').insert({
-    user_id: item.user_id,
-    item_id: itemId,
-    type: 'enrich_item',
-    payload: { itemId },
-    status: 'queued',
-  });
+  await enqueueEnrichItem(admin, item.user_id, itemId);
 
   return {};
 }
