@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/app/components/app-shell';
 
 export default function NewItemPage() {
+  const router = useRouter();
   const [url, setUrl] = useState('');
   const [urlStatus, setUrlStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [urlMessage, setUrlMessage] = useState('');
@@ -34,9 +36,8 @@ export default function NewItemPage() {
         setUrlMessage(data.error || 'Failed');
         return;
       }
-      setUrlStatus('success');
-      setUrlMessage('Item created. Processing in background.');
       setUrl('');
+      router.push(`/items/${data.itemId}`);
     } catch {
       setUrlStatus('error');
       setUrlMessage('Network error');
@@ -59,10 +60,9 @@ export default function NewItemPage() {
         setPasteMessage(data.error || 'Failed');
         return;
       }
-      setPasteStatus('success');
-      setPasteMessage('Item created. Processing in background.');
       setPasteTitle('');
       setPasteText('');
+      router.push(`/items/${data.itemId}`);
     } catch {
       setPasteStatus('error');
       setPasteMessage('Network error');
@@ -92,19 +92,29 @@ export default function NewItemPage() {
         setFileMessage(data.error || 'Failed');
         return;
       }
-      setFileStatus('success');
-      setFileMessage('Item created. Processing in background.');
       setFile(null);
       setFileTitle('');
+      router.push(`/items/${data.itemId}`);
     } catch {
       setFileStatus('error');
       setFileMessage('Network error');
     }
   }
 
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      const target = e.target as HTMLElement;
+      const form = target.closest('form');
+      if (form) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    }
+  }
+
   return (
     <AppShell>
-      <main className="mx-auto max-w-2xl p-6">
+      <main className="mx-auto max-w-2xl p-6" onKeyDown={handleKeyDown}>
         <h1 className="text-xl font-semibold text-[var(--fg-default)]">New item</h1>
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
           Save URLs, paste text, or upload documents (PDF, DOCX, TXT, MD). Each item is extracted and enriched automatically.
@@ -129,10 +139,8 @@ export default function NewItemPage() {
               Capture URL
             </button>
           </form>
-          {urlMessage && (
-            <p className={`mt-1 text-sm ${urlStatus === 'error' ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
-              {urlMessage}
-            </p>
+          {urlStatus === 'error' && urlMessage && (
+            <p className="mt-1 text-sm text-[var(--danger)]">{urlMessage}</p>
           )}
         </section>
 
@@ -162,10 +170,8 @@ export default function NewItemPage() {
               Capture paste
             </button>
           </form>
-          {pasteMessage && (
-            <p className={`mt-1 text-sm ${pasteStatus === 'error' ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
-              {pasteMessage}
-            </p>
+          {pasteStatus === 'error' && pasteMessage && (
+            <p className="mt-1 text-sm text-[var(--danger)]">{pasteMessage}</p>
           )}
         </section>
 
@@ -193,10 +199,8 @@ export default function NewItemPage() {
               Capture file
             </button>
           </form>
-          {fileMessage && (
-            <p className={`mt-1 text-sm ${fileStatus === 'error' ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
-              {fileMessage}
-            </p>
+          {fileStatus === 'error' && fileMessage && (
+            <p className="mt-1 text-sm text-[var(--danger)]">{fileMessage}</p>
           )}
         </section>
       </main>

@@ -62,12 +62,14 @@ export async function runExtractFile(
     return { error: 'Unsupported file type' };
   }
 
+  const now = new Date().toISOString();
   const { error: updateErr } = await admin
     .from('items')
     .update({
       cleaned_text: cleanedText.slice(0, 500_000),
       status: 'extracted',
-      updated_at: new Date().toISOString(),
+      extracted_at: now,
+      updated_at: now,
     })
     .eq('id', itemId);
 

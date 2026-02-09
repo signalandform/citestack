@@ -135,13 +135,15 @@ export async function runEnrichItem(
 
   const summaryCompat = `${abstract}\n\n- ${bullets.join('\n- ')}`;
 
+  const now = new Date().toISOString();
   const updates: Record<string, unknown> = {
     abstract,
     bullets,
     summary: summaryCompat,
     status: 'enriched',
     error: null,
-    updated_at: new Date().toISOString(),
+    enriched_at: now,
+    updated_at: now,
   };
   if (!item.title && enrichedTitle) updates.title = enrichedTitle;
 

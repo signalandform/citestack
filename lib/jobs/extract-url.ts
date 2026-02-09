@@ -58,13 +58,15 @@ export async function runExtractUrl(
     return { error: 'Could not extract text from URL' };
   }
 
+  const now = new Date().toISOString();
   const { error: updateErr } = await admin
     .from('items')
     .update({
       raw_text: html.slice(0, 500_000),
       cleaned_text: cleanedText.slice(0, 500_000),
       status: 'extracted',
-      updated_at: new Date().toISOString(),
+      extracted_at: now,
+      updated_at: now,
     })
     .eq('id', itemId);
 
