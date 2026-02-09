@@ -13,6 +13,8 @@ type Item = {
   url: string | null;
   domain: string | null;
   status: string;
+  abstract: string | null;
+  bullets: string[] | null;
   summary: string | null;
   error: string | null;
   raw_text: string | null;
@@ -187,12 +189,24 @@ export default function ItemDetailPage() {
           </div>
         )}
 
-        {item.summary && (
+        {(item.abstract || (item.bullets && item.bullets.length > 0)) ? (
           <section className="mt-6">
             <h2 className="text-sm font-medium text-gray-700">Summary</h2>
-            <div className="mt-2 rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-800 whitespace-pre-wrap">
-              {item.summary}
+            <div className="mt-2 rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-800">
+              {item.abstract && <p className="mb-3">{item.abstract}</p>}
+              {item.bullets && item.bullets.length > 0 && (
+                <ul className="list-disc list-inside space-y-1">
+                  {item.bullets.map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
+              )}
             </div>
+          </section>
+        ) : item.status === 'enriched' && (
+          <section className="mt-6">
+            <h2 className="text-sm font-medium text-gray-700">Summary</h2>
+            <p className="mt-2 text-sm text-gray-500">Not enriched yet.</p>
           </section>
         )}
 

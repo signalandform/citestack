@@ -7,30 +7,42 @@ function getOpenAI() {
   return new OpenAI({ apiKey: key });
 }
 
-type EnrichPayload = {
-  summary: string;
-  quotes: Array<{ quote: string; why_it_matters: string }>;
+export type Enriched = {
+  title: string | null;
+  abstract: string;
+  bullets: string[];
   tags: string[];
-  suggested_title?: string;
+  quotes: { quote: string; why_it_matters: string }[];
 };
 
 const ENRICH_SYSTEM = `You are a research assistant. Given the full text of a source (article, document, or paste), produce:
-1. summary: A 2-3 sentence abstract, then 8-15 bullet points of key points. Return as a single string with "ABSTRACT: ..." then "BULLETS: ..." with one bullet per line.
-2. quotes: 5-12 key quotes from the text, each with a short "why_it_matters" explanation. Only use exact quotes from the text; do not fabricate.
-3. tags: 8-20 reusable topic labels (lowercase, short, no spaces in a tag).
-4. suggested_title: A concise title if the text has no clear title; otherwise omit.
+1. abstract: A 2-3 sentence summary of the main content.
+2. bullets: 8-15 key points as an array of strings.
+3. quotes: 5-12 key quotes from the text, each with a short "why_it_matters" explanation. Only use exact quotes from the text; do not fabricate.
+4. tags: 8-20 reusable topic labels (lowercase, short, no spaces in a tag).
+5. title: A concise title only if the text has no clear title; otherwise omit or null.
 
-Respond with valid JSON only: { "summary": "...", "quotes": [ { "quote": "...", "why_it_matters": "..." } ], "tags": ["tag1", "tag2"], "suggested_title": "..." or omit }`;
+Respond with valid JSON only: { "abstract": "...", "bullets": ["point 1", "point 2", ...], "quotes": [ { "quote": "...", "why_it_matters": "..." } ], "tags": ["tag1", "tag2"], "title": "..." or null }`;
 
-function parseEnrichResponse(text: string): EnrichPayload | null {
+function parseEnrichResponse(text: string): Enriched | null {
   const trimmed = text.trim();
   const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return null;
   try {
-    return JSON.parse(jsonMatch[0]) as EnrichPayload;
+    return JSON.parse(jsonMatch[0]) as Enriched;
   } catch {
     return null;
   }
+}
+
+function validateEnriched(data: unknown): data is Enriched {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Record<string, unknown>;
+  if (typeof d.abstract !== 'string' || d.abstract.trim().length === 0) return false;
+  if (!Array.isArray(d.bullets)) return false;
+  if (d.bullets.length < 1 || d.bullets.length > 20) return false;
+  if (!d.bullets.every((b: unknown) => typeof b === 'string')) return false;
+  return true;
 }
 
 async function setItemFailed(
@@ -52,7 +64,7 @@ export async function runEnrichItem(
   admin: SupabaseClient,
   jobId: string,
   payload: { itemId: string }
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; truncated?: boolean }> {
   const { itemId } = payload;
   if (!itemId) return { error: 'Missing itemId' };
 
@@ -77,8 +89,9 @@ export async function runEnrichItem(
     return { error: msg };
   }
 
+  const wasTruncated = text.length > 120_000;
   const truncated = text.slice(0, 120_000);
-  let payloadResult: EnrichPayload | null = null;
+  let enriched: Enriched | null = null;
 
   try {
     const openai = getOpenAI();
@@ -86,7 +99,7 @@ export async function runEnrichItem(
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: ENRICH_SYSTEM },
-        { role: 'user', content: `Extract summary, quotes, tags, and optional title from this text:\n\n${truncated}` },
+        { role: 'user', content: `Extract abstract, bullets, quotes, tags, and optional title from this text:\n\n${truncated}` },
       ],
       response_format: { type: 'json_object' },
     });
@@ -96,15 +109,20 @@ export async function runEnrichItem(
       await setItemFailed(admin, itemId, msg);
       return { error: msg };
     }
-    payloadResult = parseEnrichResponse(content);
-    if (!payloadResult) {
+    enriched = parseEnrichResponse(content);
+    if (!enriched) {
       try {
-        payloadResult = JSON.parse(content) as EnrichPayload;
+        enriched = JSON.parse(content) as Enriched;
       } catch {
         const msg = 'Could not parse OpenAI response';
         await setItemFailed(admin, itemId, msg);
         return { error: msg };
       }
+    }
+    if (!validateEnriched(enriched)) {
+      const msg = 'Invalid enrichment: abstract required, bullets must be array of 1-20 strings';
+      await setItemFailed(admin, itemId, msg);
+      return { error: msg };
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'OpenAI request failed';
@@ -112,16 +130,20 @@ export async function runEnrichItem(
     return { error: msg };
   }
 
-  const { summary, quotes = [], tags: tagNames = [], suggested_title } = payloadResult;
+  const { abstract, bullets, quotes = [], tags: tagNames = [], title: enrichedTitle } = enriched;
   const userId = item.user_id;
 
+  const summaryCompat = `${abstract}\n\n- ${bullets.join('\n- ')}`;
+
   const updates: Record<string, unknown> = {
+    abstract,
+    bullets,
+    summary: summaryCompat,
     status: 'enriched',
     error: null,
     updated_at: new Date().toISOString(),
   };
-  if (summary) updates.summary = summary;
-  if (!item.title && suggested_title) updates.title = suggested_title;
+  if (!item.title && enrichedTitle) updates.title = enrichedTitle;
 
   const { error: updateItemErr } = await admin
     .from('items')
@@ -146,6 +168,8 @@ export async function runEnrichItem(
     });
   }
 
+  await admin.from('item_tags').delete().eq('item_id', itemId);
+
   for (const name of tagNames) {
     const tagName = String(name).trim().toLowerCase().slice(0, 100);
     if (!tagName) continue;
@@ -169,13 +193,8 @@ export async function runEnrichItem(
       tagId = inserted.id;
     }
 
-    await admin
-      .from('item_tags')
-      .upsert(
-        { item_id: itemId, tag_id: tagId },
-        { onConflict: 'item_id,tag_id' }
-      );
+    await admin.from('item_tags').insert({ item_id: itemId, tag_id: tagId });
   }
 
-  return {};
+  return wasTruncated ? { truncated: true } : {};
 }

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     .from('items')
     .select('id, title, source_type, summary, status, created_at')
     .eq('user_id', user.id)
-    .or(`title.ilike.${pattern},summary.ilike.${pattern}`)
+    .or(`title.ilike.${pattern},summary.ilike.${pattern},abstract.ilike.${pattern}`)
     .order('created_at', { ascending: false })
     .limit(50);
 
