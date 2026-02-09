@@ -1,4 +1,4 @@
-# Clerkbook
+# Citestack
 
 Citation-first research library (save → summarize → search → cite).
 

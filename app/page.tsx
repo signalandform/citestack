@@ -17,13 +17,13 @@ export default async function Home() {
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="text-3xl font-semibold text-[var(--fg-default)]">Clerkbook</h1>
+      <h1 className="text-3xl font-semibold text-[var(--fg-default)]">Citestack</h1>
       <p className="mt-2 text-lg text-[var(--fg-muted)]">
         Your citation-first research library.
       </p>
 
       <p className="mt-6 text-sm text-[var(--fg-muted)]">
-        Save URLs, paste text, or upload files. Clerkbook extracts and enriches content automatically,
+        Save URLs, paste text, or upload files. Citestack extracts and enriches content automatically,
         so you can build a searchable library of papers, articles, and notes — and cite with confidence.
       </p>
 

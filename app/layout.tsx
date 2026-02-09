@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Clerkbook",
+  title: "Citestack",
   description: "Citation-first research library (save → summarize → search → cite)",
 };
 

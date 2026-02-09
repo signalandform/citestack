@@ -5,7 +5,7 @@ import { runExtractFile } from '@/lib/jobs/extract-file';
 import { runEnrichItem } from '@/lib/jobs/enrich-item';
 
 function getAdminSecret(request: Request): string | null {
-  const header = request.headers.get('x-clerkbook-admin-secret');
+  const header = request.headers.get('x-citestack-admin-secret');
   if (header) return header;
   const auth = request.headers.get('authorization');
   if (auth?.startsWith('Bearer ')) return auth.slice(7);
@@ -15,7 +15,7 @@ function getAdminSecret(request: Request): string | null {
 
 async function runJobs(request: Request) {
   const secret = getAdminSecret(request);
-  const expected = process.env.CLERKBOOK_ADMIN_SECRET;
+  const expected = process.env.CITESTACK_ADMIN_SECRET;
   if (!expected || secret !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

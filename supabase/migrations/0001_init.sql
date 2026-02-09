@@ -1,4 +1,4 @@
--- Clerkbook initial schema (v0)
+-- Citestack initial schema (v0)
 -- Run in Supabase SQL editor.
 
 -- Extensions

@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-[var(--border-default)] bg-[var(--bg-default)]">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-3">
           <Link href="/library" className="text-sm font-semibold text-[var(--fg-default)] hover:text-[var(--accent)]">
-            Clerkbook
+            Citestack
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/library" className="text-sm text-[var(--fg-muted)] hover:text-[var(--fg-default)]">

@@ -28,7 +28,7 @@ export async function runExtractUrl(
     const res = await fetch(url, {
       signal: controller.signal,
       redirect: 'follow',
-      headers: { 'User-Agent': 'Clerkbook/1.0 (research library)' },
+      headers: { 'User-Agent': 'Citestack/1.0 (research library)' },
     });
     clearTimeout(timeout);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
