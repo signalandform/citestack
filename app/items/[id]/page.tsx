@@ -54,6 +54,25 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
 export default function ItemDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -75,6 +94,7 @@ export default function ItemDetailPage() {
   const [titleEditValue, setTitleEditValue] = useState('');
   const [screenshotFullscreen, setScreenshotFullscreen] = useState(false);
   const [citationAccessedOn, setCitationAccessedOn] = useState(() => todayISO());
+  const [citationStyle, setCitationStyle] = useState<'apa' | 'mla' | 'chicago'>('apa');
   const [citations, setCitations] = useState<{ apa: string; mla: string; chicago: string } | null>(null);
   const [citationsLoading, setCitationsLoading] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -164,7 +184,9 @@ export default function ItemDetailPage() {
   }
 
   async function copyWithFeedback(text: string, withCitation: boolean) {
-    const final = withCitation ? `${text}\n${formatCitation()}` : text;
+    const citationText =
+      withCitation && citations ? citations[citationStyle] : withCitation ? formatCitation() : '';
+    const final = withCitation && citationText ? `${text}\n${citationText}` : text;
     try {
       await navigator.clipboard.writeText(final);
       showToast(withCitation ? 'Copied with citation' : 'Copied', 'success');
@@ -441,7 +463,7 @@ export default function ItemDetailPage() {
                     download
                     className="block border-t border-[var(--border-default)] bg-[var(--bg-inset)] px-2 py-1 text-center text-xs text-[var(--accent)] hover:bg-[var(--draft-muted)]"
                   >
-                    Download
+                    Download image
                   </a>
                 </div>
               ))}
@@ -641,23 +663,43 @@ export default function ItemDetailPage() {
             {item.status}
           </span>
           <CoverageBadge item={item} />
+          <span className="text-[var(--fg-muted)]">{item.source_type}</span>
+        </div>
+
+        {/* Primary action row: Open source, Copy citation, Add to collection */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          {item.url && (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-1 text-xs text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+            >
+              Open source
+            </a>
+          )}
+          {citations && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(citations[citationStyle]);
+                  showToast('Copied', 'success');
+                } catch {
+                  showToast('Copy failed', 'error');
+                }
+              }}
+              className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-1 text-xs text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+            >
+              Copy citation
+            </button>
+          )}
           <CollectionPicker
             itemId={item.id}
             collectionIds={item.collection_ids ?? []}
             collections={collections}
             onUpdate={fetchItem}
           />
-          <span className="text-[var(--fg-muted)]">{item.source_type}</span>
-          {item.url && (
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--accent)] underline hover:no-underline"
-            >
-              Open URL
-            </a>
-          )}
         </div>
 
         {/* Processing state: prominent when captured or extracted */}
@@ -712,61 +754,32 @@ export default function ItemDetailPage() {
               <p className="mt-3 text-xs text-[var(--fg-muted)]">Loading citations…</p>
             )}
             {!citationsLoading && citations && (
-              <div className="mt-4 space-y-4">
-                <div>
-                  <p className="text-xs font-medium text-[var(--fg-muted)]">APA 7</p>
-                  <p className="mt-1 text-sm text-[var(--fg-default)]">{citations.apa}</p>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(citations!.apa);
-                        showToast('Copied', 'success');
-                      } catch {
-                        showToast('Copy failed', 'error');
-                      }
-                    }}
-                    className="mt-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
-                  >
-                    Copy citation
-                  </button>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-[var(--fg-muted)]">MLA 9</p>
-                  <p className="mt-1 text-sm text-[var(--fg-default)]">{citations.mla}</p>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(citations!.mla);
-                        showToast('Copied', 'success');
-                      } catch {
-                        showToast('Copy failed', 'error');
-                      }
-                    }}
-                    className="mt-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
-                  >
-                    Copy citation
-                  </button>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-[var(--fg-muted)]">Chicago (Notes/Bibliography)</p>
-                  <p className="mt-1 text-sm text-[var(--fg-default)]">{citations.chicago}</p>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(citations!.chicago);
-                        showToast('Copied', 'success');
-                      } catch {
-                        showToast('Copy failed', 'error');
-                      }
-                    }}
-                    className="mt-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
-                  >
-                    Copy citation
-                  </button>
-                </div>
+              <div className="mt-4 space-y-3">
+                <label className="block text-xs font-medium text-[var(--fg-muted)]">Style</label>
+                <select
+                  value={citationStyle}
+                  onChange={(e) => setCitationStyle(e.target.value as 'apa' | 'mla' | 'chicago')}
+                  className="filter-select w-full max-w-xs px-2 py-1.5 text-sm"
+                >
+                  <option value="apa">APA 7</option>
+                  <option value="mla">MLA 9</option>
+                  <option value="chicago">Chicago (Notes/Bibliography)</option>
+                </select>
+                <p className="mt-2 text-sm text-[var(--fg-default)]">{citations[citationStyle]}</p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(citations[citationStyle]);
+                      showToast('Copied', 'success');
+                    } catch {
+                      showToast('Copy failed', 'error');
+                    }
+                  }}
+                  className="mt-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                >
+                  Copy citation
+                </button>
               </div>
             )}
             {!citationsLoading && !citations && (
@@ -908,16 +921,18 @@ export default function ItemDetailPage() {
                         <button
                           type="button"
                           onClick={() => copyWithFeedback(b, false)}
-                          className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                          className="inline-flex items-center gap-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
                         >
+                          <CopyIcon className="h-3.5 w-3.5 shrink-0" />
                           Copy
                         </button>
                         <button
                           type="button"
                           onClick={() => copyWithFeedback(b, true)}
-                          className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                          className="inline-flex items-center gap-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
                         >
-                          Copy + citation
+                          <CopyIcon className="h-3.5 w-3.5 shrink-0" />
+                          Cite
                         </button>
                       </span>
                     </li>
@@ -953,16 +968,18 @@ export default function ItemDetailPage() {
                       <button
                         type="button"
                         onClick={() => copyWithFeedback(`"${q.quote}"`, false)}
-                        className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                        className="inline-flex items-center gap-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
                       >
+                        <CopyIcon className="h-3.5 w-3.5 shrink-0" />
                         Copy
                       </button>
                       <button
                         type="button"
                         onClick={() => copyWithFeedback(`"${q.quote}"`, true)}
-                        className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                        className="inline-flex items-center gap-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
                       >
-                        Copy + citation
+                        <CopyIcon className="h-3.5 w-3.5 shrink-0" />
+                        Cite
                       </button>
                     </span>
                   </div>
