@@ -373,61 +373,61 @@ function LibraryContent() {
                 : null;
 
               return (
-                <li key={item.id} className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(item.id)}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      toggleSelect(item.id);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="mt-3.5 shrink-0 rounded border-[var(--border-default)]"
-                  />
-                  <Link
-                    href={`/items/${item.id}`}
-                    className="block flex-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-3 text-sm transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]"
-                  >
-                    <div className="font-medium text-[var(--fg-default)]">
-                      {getItemDisplayTitle(item)}
-                    </div>
-                    {snippetDisplay && (
-                      <p className="mt-1 text-[var(--fg-muted)]">{snippetDisplay}</p>
-                    )}
-                    {item.status !== 'enriched' && !snippetDisplay && (
-                      <p className="mt-1 text-xs text-[var(--fg-muted)] opacity-70">Processing…</p>
-                    )}
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {item.tags && item.tags.length > 0 && (
-                        <span className="flex flex-wrap gap-1">
-                          {item.tags.slice(0, 5).map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-md bg-[var(--draft-muted)] px-1.5 py-0.5 text-xs text-[var(--fg-muted)]"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {item.tags.length > 5 && (
-                            <span className="text-xs text-[var(--fg-muted)] opacity-70">+{item.tags.length - 5}</span>
-                          )}
-                        </span>
+                <li key={item.id}>
+                  <div className="relative rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute top-3 right-3 z-10 rounded border-[var(--border-default)]"
+                      aria-label={`Select ${getItemDisplayTitle(item)}`}
+                    />
+                    <Link
+                      href={`/items/${item.id}`}
+                      className="block p-3 pr-10 text-sm"
+                    >
+                      <div className="font-medium text-[var(--fg-default)]">
+                        {getItemDisplayTitle(item)}
+                      </div>
+                      {snippetDisplay && (
+                        <p className="mt-1 text-[var(--fg-muted)]">{snippetDisplay}</p>
                       )}
-                      <span className="flex flex-wrap items-center gap-2 text-xs text-[var(--fg-muted)]">
-                        <CollectionPicker
-                          itemId={item.id}
-                          collectionIds={item.collection_ids ?? []}
-                          collections={collections}
-                          onUpdate={fetchItems}
-                          compact
-                        />
-                        <CoverageBadge item={item} />
-                        <span>{item.source_type}</span>
-                        <span>{item.status}</span>
-                        <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                      </span>
-                    </div>
-                  </Link>
+                      {item.status !== 'enriched' && !snippetDisplay && (
+                        <p className="mt-1 text-xs text-[var(--fg-muted)] opacity-70">Processing…</p>
+                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {item.tags && item.tags.length > 0 && (
+                          <span className="flex flex-wrap gap-1">
+                            {item.tags.slice(0, 5).map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-md bg-[var(--draft-muted)] px-1.5 py-0.5 text-xs text-[var(--fg-muted)]"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {item.tags.length > 5 && (
+                              <span className="text-xs text-[var(--fg-muted)] opacity-70">+{item.tags.length - 5}</span>
+                            )}
+                          </span>
+                        )}
+                        <span className="flex flex-wrap items-center gap-2 text-xs text-[var(--fg-muted)]">
+                          <CollectionPicker
+                            itemId={item.id}
+                            collectionIds={item.collection_ids ?? []}
+                            collections={collections}
+                            onUpdate={fetchItems}
+                            compact
+                          />
+                          <CoverageBadge item={item} />
+                          <span>{item.source_type}</span>
+                          <span>{item.status}</span>
+                          <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                        </span>
+                      </div>
+                    </Link>
+                  </div>
                 </li>
               );
             })}

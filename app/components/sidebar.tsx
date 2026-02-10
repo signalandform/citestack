@@ -80,16 +80,18 @@ export function Sidebar() {
         </div>
       </div>
       <div className="border-t border-[var(--border-default)] px-3 py-2">
-        <Link href="/account" className={navLinkClass(pathname === '/account')}>
-          Account
-        </Link>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="w-full rounded-md px-3 py-2 text-left text-sm text-[var(--fg-muted)] hover:bg-[var(--draft-muted)] hover:text-[var(--fg-default)]"
-        >
-          Sign out
-        </button>
+        <div className="flex flex-col gap-0.5">
+          <Link href="/account" className={navLinkClass(pathname === '/account')}>
+            Account
+          </Link>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="rounded-md px-3 py-2 text-left text-sm text-[var(--fg-muted)] hover:bg-[var(--draft-muted)] hover:text-[var(--fg-default)]"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </aside>
   );
