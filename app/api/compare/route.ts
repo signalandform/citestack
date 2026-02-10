@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUser } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getBalance, getCreditCostCompare, spendCredits, REASON } from '@/lib/credits';
 import { runCompareItems, type CompareResult } from '@/lib/jobs/compare-items';
 
 export async function GET() {
@@ -51,6 +52,28 @@ export async function POST(request: Request) {
   }
 
   const admin = supabaseAdmin();
+
+  const cost = getCreditCostCompare(trimmed.length);
+  const { balance } = await getBalance(admin, user.id);
+  if (balance < cost) {
+    return NextResponse.json(
+      {
+        error: 'Insufficient credits',
+        message: `This comparison costs ${cost} credits; you have ${balance}. Credits reset monthly.`,
+        required: cost,
+        balance,
+      },
+      { status: 402 }
+    );
+  }
+
+  const spent = await spendCredits(admin, user.id, cost, REASON.COMPARE_ITEMS, {});
+  if (!spent.ok) {
+    return NextResponse.json(
+      { error: 'Insufficient credits', message: 'Could not deduct credits. Try again.' },
+      { status: 402 }
+    );
+  }
 
   const { data: items, error } = await admin
     .from('items')

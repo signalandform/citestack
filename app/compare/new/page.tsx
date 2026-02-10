@@ -50,6 +50,7 @@ export default function NewComparisonPage() {
   };
 
   const canCompare = selectedIds.size >= 2 && selectedIds.size <= 5;
+  const compareCreditCost = canCompare ? 5 + Math.max(0, selectedIds.size - 2) : 0;
 
   async function handleCompare() {
     if (!canCompare || comparing) return;
@@ -62,7 +63,8 @@ export default function NewComparisonPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showToast(data.error ?? 'Comparison failed', 'error');
+        const message = data.message ?? data.error ?? 'Comparison failed';
+        showToast(message, 'error');
         return;
       }
       showToast('Comparison complete', 'success');
@@ -99,7 +101,7 @@ export default function NewComparisonPage() {
           </div>
         ) : (
           <>
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handleCompare}
@@ -108,6 +110,11 @@ export default function NewComparisonPage() {
               >
                 {comparing ? 'Comparing…' : `Compare (${selectedIds.size} selected)`}
               </button>
+              {canCompare && (
+                <span className="text-sm text-[var(--fg-muted)]">
+                  This comparison will use {compareCreditCost} credits.
+                </span>
+              )}
               {selectedIds.size > 0 && (
                 <button
                   type="button"

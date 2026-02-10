@@ -133,7 +133,11 @@ export async function runExtractUrl(
     status: 'queued',
   });
 
-  await enqueueEnrichItem(admin, item.user_id, itemId);
+  const enrichResult = await enqueueEnrichItem(admin, item.user_id, itemId);
+  if ('error' in enrichResult) {
+    // Insufficient credits: skip enqueue; item stays extracted
+    return {};
+  }
 
   return {};
 }

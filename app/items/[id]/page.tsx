@@ -291,7 +291,11 @@ export default function ItemDetailPage() {
     try {
       const url = mode ? `/api/items/${id}/re-enrich?mode=${encodeURIComponent(mode)}` : `/api/items/${id}/re-enrich`;
       const res = await fetch(url, { method: 'POST' });
-      await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(data.message ?? data.error ?? 'Re-enrich failed', 'error');
+        return;
+      }
       showToast('Re-enrich queued', 'success');
       fetchItem();
     } finally {
@@ -757,35 +761,40 @@ export default function ItemDetailPage() {
         </section>
 
         {item.status === 'enriched' && (
-          <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--fg-muted)]">
-            Regenerate:{' '}
-            <button
-              type="button"
-              onClick={() => handleReEnrich('concise')}
-              disabled={actionLoading}
-              className="text-[var(--accent)] hover:underline disabled:opacity-50"
-            >
-              Re-enrich (concise)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleReEnrich('analytical')}
-              disabled={actionLoading}
-              className="text-[var(--accent)] hover:underline disabled:opacity-50"
-            >
-              Re-enrich (analytical)
-            </button>
-            {(item.source_type === 'url' || item.source_type === 'file') && (
+          <>
+            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--fg-muted)]">
+              Regenerate:{' '}
               <button
                 type="button"
-                onClick={handleRetry}
+                onClick={() => handleReEnrich('concise')}
                 disabled={actionLoading}
                 className="text-[var(--accent)] hover:underline disabled:opacity-50"
               >
-                Re-extract
+                Re-enrich (concise)
               </button>
-            )}
-          </p>
+              <button
+                type="button"
+                onClick={() => handleReEnrich('analytical')}
+                disabled={actionLoading}
+                className="text-[var(--accent)] hover:underline disabled:opacity-50"
+              >
+                Re-enrich (analytical)
+              </button>
+              {(item.source_type === 'url' || item.source_type === 'file') && (
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  disabled={actionLoading}
+                  className="text-[var(--accent)] hover:underline disabled:opacity-50"
+                >
+                  Re-extract
+                </button>
+              )}
+            </p>
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              Re-enrich uses 3 credits (full) or 1 credit (tags only).
+            </p>
+          </>
         )}
 
         {item.status === 'failed' && item.error && (

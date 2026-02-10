@@ -45,7 +45,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { jobId } = await enqueueEnrichItem(admin, user.id, item.id);
+    const result = await enqueueEnrichItem(admin, user.id, item.id);
+    if ('error' in result && result.error === 'insufficient_credits') {
+      return NextResponse.json(
+        {
+          error: 'Insufficient credits',
+          message: `Need ${result.required} credits; you have ${result.balance}. Credits reset monthly.`,
+          required: result.required,
+          balance: result.balance,
+        },
+        { status: 402 }
+      );
+    }
+    const jobId = 'jobId' in result ? result.jobId : undefined;
     return NextResponse.json(
       { itemId: item.id, jobId },
       { status: 201 }

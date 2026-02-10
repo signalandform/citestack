@@ -30,6 +30,20 @@ export async function POST(
 
   await admin.from('items').update({ error: null }).eq('id', itemId);
 
-  const { jobId } = await enqueueEnrichItem(admin, user.id, itemId, true, mode || undefined);
-  return NextResponse.json({ message: 'Re-enrich enqueued', jobId }, { status: 200 });
+  const result = await enqueueEnrichItem(admin, user.id, itemId, true, mode || undefined);
+  if ('error' in result && result.error === 'insufficient_credits') {
+    return NextResponse.json(
+      {
+        error: 'Insufficient credits',
+        message: `Need ${result.required} credits; you have ${result.balance}. Credits reset monthly.`,
+        required: result.required,
+        balance: result.balance,
+      },
+      { status: 402 }
+    );
+  }
+  if ('jobId' in result) {
+    return NextResponse.json({ message: 'Re-enrich enqueued', jobId: result.jobId }, { status: 200 });
+  }
+  return NextResponse.json({ message: 'Skipped (already queued or running)', skipped: true }, { status: 200 });
 }

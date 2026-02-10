@@ -93,10 +93,22 @@ export async function POST(
   }
 
   if (item.source_type === 'paste') {
-    const { jobId, skipped } = await enqueueEnrichItem(admin, user.id, itemId, force);
-    if (skipped) {
+    const result = await enqueueEnrichItem(admin, user.id, itemId, force);
+    if ('error' in result && result.error === 'insufficient_credits') {
+      return NextResponse.json(
+        {
+          error: 'Insufficient credits',
+          message: `Need ${result.required} credits; you have ${result.balance}. Credits reset monthly.`,
+          required: result.required,
+          balance: result.balance,
+        },
+        { status: 402 }
+      );
+    }
+    if ('skipped' in result && result.skipped) {
       return NextResponse.json({ message: 'Enrich job already queued or running', jobId: null }, { status: 200 });
     }
+    const jobId = 'jobId' in result ? result.jobId : undefined;
     return NextResponse.json({ message: 'Retry enqueued', jobId }, { status: 200 });
   }
 

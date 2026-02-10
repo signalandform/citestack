@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getCreditCostEnrich, spendCredits, REASON } from '@/lib/credits';
 import { runExtractUrl } from '@/lib/jobs/extract-url';
 import { runExtractFile } from '@/lib/jobs/extract-file';
 import { runEnrichItem } from '@/lib/jobs/enrich-item';
@@ -67,7 +68,18 @@ async function runJobs(request: Request) {
           mimeType: string;
         });
       } else if (job.type === 'enrich_item') {
-        result = await runEnrichItem(admin, job.id, payload as { itemId: string; mode?: string });
+        const enrichPayload = payload as { itemId: string; mode?: string };
+        const cost = getCreditCostEnrich(enrichPayload.mode);
+        const reason = enrichPayload.mode === 'tags_only' ? REASON.ENRICH_TAGS_ONLY : REASON.ENRICH_FULL;
+        const spent = await spendCredits(admin, job.user_id, cost, reason, {
+          jobId: job.id,
+          itemId: job.item_id ?? undefined,
+        });
+        if (!spent.ok) {
+          result = { error: 'Insufficient credits' };
+        } else {
+          result = await runEnrichItem(admin, job.id, enrichPayload);
+        }
       } else if (job.type === 'screenshot_url') {
         result = await runScreenshotUrl(admin, job.id, payload as { itemId: string; url?: string });
       } else {
