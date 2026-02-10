@@ -379,19 +379,30 @@ export default function ItemDetailPage() {
             <h2 className="text-sm font-medium text-[var(--fg-default)]">Images from source</h2>
             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
               {item.image_urls.slice(0, 20).map((imgUrl, i) => (
-                <a
+                <div
                   key={i}
-                  href={imgUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block overflow-hidden rounded border border-[var(--border-default)]"
+                  className="overflow-hidden rounded border border-[var(--border-default)]"
                 >
-                  <img
-                    src={imgUrl}
-                    alt=""
-                    className="h-[120px] w-full object-cover object-center"
-                  />
-                </a>
+                  <a
+                    href={imgUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt=""
+                      className="h-[120px] w-full object-cover object-center"
+                    />
+                  </a>
+                  <a
+                    href={`/api/items/${id}/image-download?url=${encodeURIComponent(imgUrl)}&index=${i + 1}`}
+                    download
+                    className="block border-t border-[var(--border-default)] bg-[var(--bg-inset)] px-2 py-1 text-center text-xs text-[var(--accent)] hover:bg-[var(--draft-muted)]"
+                  >
+                    Download
+                  </a>
+                </div>
               ))}
             </div>
             {item.image_urls.length > 20 && (
