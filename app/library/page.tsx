@@ -127,6 +127,30 @@ function LibraryContent() {
   };
 
   const canCompare = selectedIds.size >= 2 && selectedIds.size <= 5;
+  const favoritesCollectionId = collections.find((c) => c.name === 'Favorites')?.id;
+
+  async function toggleFavorite(itemId: string, isInFavorites: boolean) {
+    if (!favoritesCollectionId) return;
+    try {
+      if (isInFavorites) {
+        await fetch(
+          `/api/collections/${favoritesCollectionId}/items?itemId=${encodeURIComponent(itemId)}`,
+          { method: 'DELETE' }
+        );
+        showToast('Removed from Favorites', 'success');
+      } else {
+        await fetch(`/api/collections/${favoritesCollectionId}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId }),
+        });
+        showToast('Added to Favorites', 'success');
+      }
+      fetchItems();
+    } catch {
+      showToast('Failed to update', 'error');
+    }
+  }
 
   async function handleCompare() {
     if (!canCompare || comparing) return;
@@ -371,18 +395,34 @@ function LibraryContent() {
                   ? snippet.slice(0, 150).trim() + '…'
                   : snippet
                 : null;
+              const isInFavorites = Boolean(favoritesCollectionId && item.collection_ids?.includes(favoritesCollectionId));
 
               return (
-                <li key={item.id}>
-                  <div className="relative rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(item.id)}
-                      onChange={() => toggleSelect(item.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute top-3 right-3 z-10 rounded border-[var(--border-default)]"
-                      aria-label={`Select ${getItemDisplayTitle(item)}`}
-                    />
+                <li key={item.id} className="flex items-start gap-2">
+                  <div className="relative min-w-0 flex-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]">
+                    {favoritesCollectionId && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleFavorite(item.id, isInFavorites);
+                        }}
+                        className="absolute top-3 right-3 z-10 rounded p-1 text-[var(--fg-muted)] hover:bg-[var(--bg-default)] hover:text-[var(--accent)]"
+                        title={isInFavorites ? 'Remove from Favorites' : 'Add to Favorites'}
+                        aria-label={isInFavorites ? 'Remove from Favorites' : 'Add to Favorites'}
+                      >
+                        {isInFavorites ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                            <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                     <Link
                       href={`/items/${item.id}`}
                       className="block p-3 pr-10 text-sm"
@@ -428,6 +468,17 @@ function LibraryContent() {
                       </div>
                     </Link>
                   </div>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(item.id);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-3.5 shrink-0 rounded border-[var(--border-default)]"
+                    aria-label={`Select ${getItemDisplayTitle(item)}`}
+                  />
                 </li>
               );
             })}

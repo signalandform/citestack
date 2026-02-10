@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   const admin = supabaseAdmin();
-  const { data: collections, error } = await admin
+  let { data: collections, error } = await admin
     .from('collections')
     .select('id, name, created_at')
     .eq('user_id', user.id)
@@ -19,7 +19,22 @@ export async function GET() {
     return NextResponse.json({ error: 'Could not load collections' }, { status: 500 });
   }
 
-  return NextResponse.json({ collections: collections ?? [] });
+  const list = collections ?? [];
+  const hasFavorites = list.some((c) => c.name === 'Favorites');
+  if (!hasFavorites) {
+    const { data: created, error: insertErr } = await admin
+      .from('collections')
+      .insert({ user_id: user.id, name: 'Favorites' })
+      .select('id, name, created_at')
+      .single();
+    if (!insertErr && created) {
+      list.unshift(created);
+    }
+  } else {
+    list.sort((a, b) => (a.name === 'Favorites' ? -1 : b.name === 'Favorites' ? 1 : 0));
+  }
+
+  return NextResponse.json({ collections: list });
 }
 
 export async function POST(request: Request) {
