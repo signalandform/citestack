@@ -64,8 +64,6 @@ function LibraryContent() {
   const [collectionFilter, setCollectionFilter] = useState(collectionFromUrl ?? '');
   const [newCollectionName, setNewCollectionName] = useState('');
   const [creatingCollection, setCreatingCollection] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [comparing, setComparing] = useState(false);
   const { showToast } = useToast();
   const debouncedQuery = useDebounce(searchQuery.trim(), 300);
   const debouncedDomain = useDebounce(domainFilter.trim(), 300);
@@ -117,16 +115,6 @@ function LibraryContent() {
     fetchItems();
   }, [fetchItems]);
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const canCompare = selectedIds.size >= 2 && selectedIds.size <= 5;
   const favoritesCollectionId = collections.find((c) => c.name === 'Favorites')?.id;
 
   async function toggleFavorite(itemId: string, isInFavorites: boolean) {
@@ -149,30 +137,6 @@ function LibraryContent() {
       fetchItems();
     } catch {
       showToast('Failed to update', 'error');
-    }
-  }
-
-  async function handleCompare() {
-    if (!canCompare || comparing) return;
-    setComparing(true);
-    try {
-      const res = await fetch('/api/compare', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemIds: [...selectedIds] }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        showToast(data.error ?? 'Comparison failed', 'error');
-        return;
-      }
-      showToast('Comparison complete', 'success');
-      setSelectedIds(new Set());
-      router.push(`/compare/${data.id}`);
-    } catch {
-      showToast('Comparison failed', 'error');
-    } finally {
-      setComparing(false);
     }
   }
 
@@ -367,27 +331,7 @@ function LibraryContent() {
         )}
 
         {!loading && !error && items.length > 0 && (
-          <>
-            {selectedIds.size > 0 && (
-              <div className="mt-4 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCompare}
-                  disabled={!canCompare || comparing}
-                  className="rounded bg-[var(--btn-primary)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
-                >
-                  {comparing ? 'Comparing…' : `Compare (${selectedIds.size} selected)`}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedIds(new Set())}
-                  className="text-sm text-[var(--fg-muted)] hover:text-[var(--fg-default)]"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-            <ul className="mt-6 space-y-3">
+          <ul className="mt-6 space-y-3">
             {items.map((item) => {
               const snippet = (item.abstract ?? item.summary ?? '').trim();
               const snippetDisplay = snippet
@@ -398,8 +342,8 @@ function LibraryContent() {
               const isInFavorites = Boolean(favoritesCollectionId && item.collection_ids?.includes(favoritesCollectionId));
 
               return (
-                <li key={item.id} className="flex items-start gap-2">
-                  <div className="relative min-w-0 flex-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]">
+                <li key={item.id}>
+                  <div className="relative rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]">
                     {favoritesCollectionId && (
                       <button
                         type="button"
@@ -468,22 +412,10 @@ function LibraryContent() {
                       </div>
                     </Link>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(item.id)}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      toggleSelect(item.id);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="mt-3.5 shrink-0 rounded border-[var(--border-default)]"
-                    aria-label={`Select ${getItemDisplayTitle(item)}`}
-                  />
                 </li>
               );
             })}
             </ul>
-          </>
         )}
       </main>
     </AppShell>

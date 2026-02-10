@@ -35,8 +35,14 @@ export default function CompareListPage() {
       <main className="mx-auto max-w-2xl p-6">
         <h1 className="text-2xl font-semibold text-[var(--fg-default)]">Comparisons</h1>
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
-          Comparison history. Select 2–5 items in Library and click Compare to run a new one.
+          Run and view comparisons of 2–5 items.
         </p>
+        <Link
+          href="/compare/new"
+          className="mt-4 inline-block rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)]"
+        >
+          New comparison
+        </Link>
 
         {loading ? (
           <p className="mt-6 text-sm text-[var(--fg-muted)]">Loading…</p>
@@ -44,8 +50,14 @@ export default function CompareListPage() {
           <p className="mt-6 text-sm text-[var(--danger)]">{error}</p>
         ) : comparisons.length === 0 ? (
           <div className="mt-6 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-muted)]">
-            No comparisons yet. Select 2–5 items in Library and click Compare to run one.
-            <Link href="/library" className="ml-1 font-medium text-[var(--accent)] underline hover:no-underline">
+            <p>No comparisons yet. Start a new comparison to compare 2–5 items.</p>
+            <Link
+              href="/compare/new"
+              className="mt-3 inline-block rounded bg-[var(--btn-primary)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)]"
+            >
+              New comparison
+            </Link>
+            <Link href="/library" className="ml-3 text-sm text-[var(--accent)] underline hover:no-underline">
               Go to Library
             </Link>
           </div>
