@@ -63,6 +63,16 @@ export function CollectionPicker({
   }, []);
 
   const inCollection = new Set(collectionIds);
+  const names = collections.filter((c) => collectionIds.includes(c.id)).map((c) => c.name);
+  const hasCollections = names.length > 0;
+  const buttonLabel = hasCollections
+    ? names.length <= 2
+      ? names.join(', ')
+      : `${names[0]} +${names.length - 1}`
+    : '+ Add to collection';
+  const buttonTitle = hasCollections
+    ? `Collection(s): ${names.join(', ')}`
+    : 'Add to collection';
 
   return (
     <div ref={ref} className="relative">
@@ -76,9 +86,9 @@ export function CollectionPicker({
         className={`rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)] ${
           compact ? 'px-1.5 py-0' : ''
         }`}
-        title="Add to collection"
+        title={buttonTitle}
       >
-        {compact ? '…' : 'Collections'}
+        {buttonLabel}
       </button>
       {open && (
         <ul
