@@ -35,6 +35,9 @@ Credits are added to your balance each month. Unused credits roll over automatic
 
 **What costs credits (display reference):** Enrich (full) = 2 credits; Retag = 1 credit; Compare (2 / 3 / 4 / 5 items) = 6 / 7 / 8 / 9 credits. Actual deduction logic may differ; see [lib/credits/costs.ts](lib/credits/costs.ts).
 
+## Legal pages
+The Privacy Policy, Terms of Service, and Acceptable Use Policy live in the repo root as `LEGAL_PRIVACY_POLICY.md`, `LEGAL_TERMS_OF_SERVICE.md`, and `LEGAL_ACCEPTABLE_USE_POLICY.md`. The app routes `/privacy`, `/terms`, and `/aup` render these files.
+
 ## Citations
 Formatted citations (APA 7, MLA 9, Chicago) and exports (BibTeX, RIS, CSL-JSON) are available per item and for multi-selected items in the library. See [docs/citations.md](docs/citations.md) for how formatting works, data sourcing, and limitations.
 

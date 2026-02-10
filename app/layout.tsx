@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/app/contexts/toast";
 import { ThemeProvider } from "@/app/contexts/theme";
+import { Footer } from "@/app/components/Footer";
 
 export const metadata: Metadata = {
   title: "Citestack",
@@ -18,7 +19,10 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <ToastProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+          {children}
+          <Footer />
+        </ThemeProvider>
         </ToastProvider>
       </body>
     </html>
