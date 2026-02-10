@@ -21,4 +21,4 @@ This Acceptable Use Policy ("AUP") describes prohibited conduct when using CiteS
 We may investigate suspected violations and suspend or terminate accounts where appropriate.
 
 ## Contact
-To report abuse, contact: _TODO: add email_
+To report abuse, contact: jack@signalandformllc.com

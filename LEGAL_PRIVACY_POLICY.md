@@ -4,7 +4,7 @@
 **Company:** Signal & Form LLC ("we", "us")  
 **Product:** CiteStack (the "Service")
 
-> **Draft notice:** This document is a working draft. Before publishing, confirm: company address, support/legal contact email, analytics providers, and whether minors are allowed.
+> **Draft notice:** This document is a working draft. Before publishing, confirm whether you want analytics/cookies and your intended minimum age.
 
 ## 1) Scope
 This Privacy Policy explains how we collect, use, disclose, and protect information when you use CiteStack, including when you create an account, save sources (URLs, pasted text), upload files (e.g., PDFs), and run extraction/enrichment features.
@@ -34,7 +34,7 @@ We collect basic operational data necessary to run and secure the Service, such 
 - Events related to job processing (queued/running/succeeded/failed).
 - Diagnostic and error logs.
 
-> If you use analytics tools (e.g., PostHog/GA), list them here before publishing.
+We currently do not use third-party analytics tracking tools (e.g., Google Analytics) on the Service.
 
 ## 3) How we use information
 We use information to:
@@ -49,9 +49,9 @@ We use information to:
 ### 4.1 OpenAI (or other AI providers)
 When you run enrichment or comparison features, the Service may send relevant extracted/cleaned text (or a truncated portion) to an AI provider (e.g., OpenAI) to generate outputs.
 
-**We do not intend to use your content to train our own models.**
+**We do not use your content to train our own models.**
 
-> Before publishing, confirm the exact AI provider(s) and the applicable data usage policy terms.
+We may use AI providers (e.g., OpenAI) to generate enrichments and comparisons. Content is sent only as needed to provide these features.
 
 ### 4.2 Supabase
 We use Supabase for:
@@ -88,8 +88,6 @@ You can delete items/files within the Service. You may request account deletion 
 ## 9) Children’s privacy
 CiteStack is not intended for children under **13** (or the minimum age required in your jurisdiction). If you believe a child has provided personal information, contact us.
 
-> Confirm your intended minimum age (13/16/18) before publishing.
-
 ## 10) International transfers
 If you access the Service from outside the United States, your information may be processed in the United States or other locations where our providers operate.
 
@@ -97,5 +95,5 @@ If you access the Service from outside the United States, your information may b
 We may update this policy from time to time. We will update the “Last updated” date and may provide additional notice for material changes.
 
 ## 12) Contact
-**Privacy contact:** _TODO: add email_  
-**Mailing address:** _TODO: add address_
+**Privacy contact:** jack@signalandformllc.com  
+**Mailing address:** Signal & Form LLC, 8 Echo Cove, Grapevine, TX 76051

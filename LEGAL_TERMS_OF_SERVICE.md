@@ -4,7 +4,7 @@
 **Company:** Signal & Form LLC ("we", "us")  
 **Product:** CiteStack (the "Service")
 
-> **Draft notice:** This is a working draft and is not legal advice. Before publishing, confirm entity name/address, governing law/venue, billing/refund policy, and IP/DMCA posture.
+> **Draft notice:** This is a working draft and is not legal advice. Before publishing, confirm governing law/venue, billing/refund policy, and IP/DMCA posture.
 
 ## 1) Agreement
 By accessing or using the Service, you agree to these Terms. If you do not agree, do not use the Service.
@@ -80,5 +80,5 @@ These Terms are governed by the laws of _TODO: state/country_. Venue for dispute
 We may update these Terms from time to time. We will update the “Last updated” date and may provide additional notice for material changes.
 
 ## 15) Contact
-**Support/legal:** _TODO: add email_  
-**Mailing address:** _TODO: add address_
+**Support/legal:** jack@signalandformllc.com  
+**Mailing address:** Signal & Form LLC, 8 Echo Cove, Grapevine, TX 76051
