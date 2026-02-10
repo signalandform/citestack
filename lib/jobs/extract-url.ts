@@ -106,6 +106,14 @@ export async function runExtractUrl(
     return { error: msg };
   }
 
+  await admin.from('jobs').insert({
+    user_id: item.user_id,
+    item_id: itemId,
+    type: 'screenshot_url',
+    payload: { itemId, url },
+    status: 'queued',
+  });
+
   await enqueueEnrichItem(admin, item.user_id, itemId);
 
   return {};

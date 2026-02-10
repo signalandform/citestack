@@ -33,6 +33,7 @@ type Item = {
   quotes: Quote[];
   tags: string[];
   collection_ids?: string[];
+  thumbnail_url?: string | null;
 };
 
 export default function ItemDetailPage() {
@@ -331,17 +332,16 @@ export default function ItemDetailPage() {
           <p className="font-medium text-[var(--fg-default)]">Source</p>
           {item.source_type === 'url' && item.url && (
             <div className="mt-2 text-[var(--fg-muted)]">
+              {item.thumbnail_url && (
+                <img
+                  src={item.thumbnail_url}
+                  alt=""
+                  className="mb-2 h-[120px] w-full rounded border border-[var(--border-default)] object-cover object-top"
+                />
+              )}
               <p>{item.domain || item.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}</p>
               <p className="mt-0.5 font-medium text-[var(--fg-default)]">{item.title || 'Untitled'}</p>
               <p className="mt-0.5 truncate text-xs text-[var(--fg-muted)]">{item.url}</p>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-[var(--accent)] underline hover:no-underline"
-              >
-                Open source
-              </a>
             </div>
           )}
           {item.source_type === 'file' && (

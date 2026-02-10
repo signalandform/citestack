@@ -16,7 +16,7 @@ export async function GET(
   const admin = supabaseAdmin();
   const { data: item, error } = await admin
     .from('items')
-    .select('id, title, source_type, url, domain, status, raw_text, cleaned_text, original_filename, mime_type, abstract, bullets, summary, error, created_at, updated_at, extracted_at, enriched_at')
+    .select('id, title, source_type, url, domain, status, raw_text, cleaned_text, original_filename, mime_type, abstract, bullets, summary, error, created_at, updated_at, extracted_at, enriched_at, thumbnail_url')
     .eq('id', id)
     .eq('user_id', user.id)
     .single();

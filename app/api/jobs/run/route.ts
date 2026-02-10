@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { runExtractUrl } from '@/lib/jobs/extract-url';
 import { runExtractFile } from '@/lib/jobs/extract-file';
 import { runEnrichItem } from '@/lib/jobs/enrich-item';
+import { runScreenshotUrl } from '@/lib/jobs/screenshot-url';
 
 function getAdminSecret(request: Request): string | null {
   const header = request.headers.get('x-citestack-admin-secret');
@@ -67,6 +68,8 @@ async function runJobs(request: Request) {
         });
       } else if (job.type === 'enrich_item') {
         result = await runEnrichItem(admin, job.id, payload as { itemId: string; mode?: string });
+      } else if (job.type === 'screenshot_url') {
+        result = await runScreenshotUrl(admin, job.id, payload as { itemId: string; url?: string });
       } else {
         result = { error: 'Unknown job type' };
       }
