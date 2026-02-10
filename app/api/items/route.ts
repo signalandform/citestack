@@ -17,13 +17,9 @@ export async function GET(request: Request) {
   const sort = url.searchParams.get('sort')?.trim();
 
   const admin = supabaseAdmin();
-  const selectFields =
-    sort === 'recent_saved'
-      ? 'id, title, source_type, domain, status, created_at, last_saved_at, abstract, summary, bullets, cleaned_text_length'
-      : 'id, title, source_type, domain, status, created_at, abstract, summary, bullets, cleaned_text_length';
   let query = admin
     .from('items')
-    .select(selectFields)
+    .select('id, title, source_type, domain, status, created_at, last_saved_at, abstract, summary, bullets, cleaned_text_length')
     .eq('user_id', user.id)
     .limit(200);
 
