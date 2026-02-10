@@ -14,14 +14,25 @@ export async function GET(request: Request) {
   const domain = url.searchParams.get('domain')?.trim();
   const tag = url.searchParams.get('tag')?.trim();
   const collection = url.searchParams.get('collection')?.trim();
+  const sort = url.searchParams.get('sort')?.trim();
 
   const admin = supabaseAdmin();
+  const selectFields =
+    sort === 'recent_saved'
+      ? 'id, title, source_type, domain, status, created_at, last_saved_at, abstract, summary, bullets, cleaned_text_length'
+      : 'id, title, source_type, domain, status, created_at, abstract, summary, bullets, cleaned_text_length';
   let query = admin
     .from('items')
-    .select('id, title, source_type, domain, status, created_at, abstract, summary, bullets, cleaned_text_length')
+    .select(selectFields)
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
     .limit(200);
+
+  if (sort === 'recent_saved') {
+    query = query.order('last_saved_at', { ascending: false, nullsFirst: false });
+    query = query.order('created_at', { ascending: false });
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
 
   if (status && status !== 'all') {
     if (status === 'processing') {

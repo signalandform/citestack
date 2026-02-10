@@ -18,6 +18,7 @@ type Item = {
   domain?: string | null;
   status: string;
   created_at: string;
+  last_saved_at?: string | null;
   abstract?: string | null;
   summary?: string | null;
   tags?: string[];
@@ -59,6 +60,7 @@ function LibraryContent() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'recent_saved'>('newest');
   const [typeFilter, setTypeFilter] = useState('');
   const [domainFilter, setDomainFilter] = useState('');
   const [collectionFilter, setCollectionFilter] = useState(collectionFromUrl ?? '');
@@ -147,12 +149,13 @@ function LibraryContent() {
     const params: Record<string, string> = {};
     if (debouncedQuery) params.q = debouncedQuery;
     if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
+    if (sortOrder === 'recent_saved' && !debouncedQuery) params.sort = 'recent_saved';
     if (typeFilter) params.source_type = typeFilter;
     if (debouncedDomain) params.domain = debouncedDomain;
     if (tagFilter) params.tag = tagFilter;
     if (effectiveCollectionFilter) params.collection = effectiveCollectionFilter;
     return `${base}${buildParams(params)}`;
-  }, [debouncedQuery, statusFilter, typeFilter, debouncedDomain, tagFilter, effectiveCollectionFilter]);
+  }, [debouncedQuery, statusFilter, sortOrder, typeFilter, debouncedDomain, tagFilter, effectiveCollectionFilter]);
 
   const fetchItems = useCallback(() => {
     setLoading(true);
@@ -227,6 +230,16 @@ function LibraryContent() {
               <option value="enriched">Enriched</option>
               <option value="failed">Failed</option>
             </select>
+            {!debouncedQuery && (
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as 'newest' | 'recent_saved')}
+                className="filter-select px-2 py-1.5"
+              >
+                <option value="newest">Newest first</option>
+                <option value="recent_saved">Recently saved first</option>
+              </select>
+            )}
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
@@ -535,6 +548,12 @@ function LibraryContent() {
                           </span>
                         )}
                         <span className="flex flex-wrap items-center gap-2 text-xs text-[var(--fg-muted)]">
+                          {item.last_saved_at &&
+                            Date.now() - new Date(item.last_saved_at).getTime() < 5 * 60 * 1000 && (
+                              <span className="rounded bg-[var(--success-muted)] px-1.5 py-0.5 text-[var(--success)]">
+                                Just saved
+                              </span>
+                            )}
                           <CollectionPicker
                             itemId={item.id}
                             collectionIds={item.collection_ids ?? []}

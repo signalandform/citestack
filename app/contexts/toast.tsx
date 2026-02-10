@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   createContext,
   useCallback,
@@ -11,13 +12,19 @@ import {
 
 export type ToastType = 'success' | 'error' | 'neutral';
 
+export type ToastOptions = {
+  linkUrl?: string;
+  linkLabel?: string;
+};
+
 type ToastState = {
   message: string;
   type: ToastType;
+  options?: ToastOptions;
 };
 
 type ToastContextValue = {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, options?: ToastOptions) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -32,17 +39,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showToast = useCallback((message: string, type: ToastType = 'neutral') => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    setToast({ message, type });
-    timeoutRef.current = setTimeout(() => {
-      setToast(null);
-      timeoutRef.current = null;
-    }, 2000);
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: ToastType = 'neutral', options?: ToastOptions) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      setToast({ message, type, options });
+      timeoutRef.current = setTimeout(() => {
+        setToast(null);
+        timeoutRef.current = null;
+      }, 2000);
+    },
+    []
+  );
 
   return (
     <ToastContext.Provider value={{ showToast }}>
@@ -58,7 +68,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 : 'border-[var(--border-default)] bg-[var(--bg-default)] text-[var(--fg-default)]'
           }`}
         >
-          {toast.message}
+          <span>
+            {toast.message}
+            {toast.options?.linkUrl && toast.options?.linkLabel && (
+              <>
+                {' · '}
+                <Link
+                  href={toast.options.linkUrl}
+                  className="underline decoration-current underline-offset-2 hover:opacity-90"
+                >
+                  {toast.options.linkLabel}
+                </Link>
+              </>
+            )}
+          </span>
         </div>
       )}
     </ToastContext.Provider>

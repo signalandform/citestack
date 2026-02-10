@@ -1,0 +1,1 @@
+export { canonicalizeUrl } from './normalize';

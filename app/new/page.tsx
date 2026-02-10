@@ -57,7 +57,10 @@ export default function NewItemPage() {
         setUrlMessage(data.error || 'Failed');
         return;
       }
-      showToast('Job queued', 'success');
+      showToast('Saved to CiteStack', 'success', {
+        linkUrl: `/items/${data.itemId}`,
+        linkLabel: 'Open item',
+      });
       setUrl('');
       router.push(`/items/${data.itemId}`);
     } catch {
@@ -82,7 +85,10 @@ export default function NewItemPage() {
         setPasteMessage(data.error || 'Failed');
         return;
       }
-      showToast('Job queued', 'success');
+      showToast('Saved to CiteStack', 'success', {
+        linkUrl: `/items/${data.itemId}`,
+        linkLabel: 'Open item',
+      });
       setPasteTitle('');
       setPasteText('');
       router.push(`/items/${data.itemId}`);
@@ -125,7 +131,10 @@ export default function NewItemPage() {
         setFileMessage(data.error || 'Upload failed. Please try again.');
         return;
       }
-      showToast('Job queued', 'success');
+      showToast('Saved to CiteStack', 'success', {
+        linkUrl: `/items/${data.itemId}`,
+        linkLabel: 'Open item',
+      });
       setFile(null);
       setFileTitle('');
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -155,7 +164,10 @@ export default function NewItemPage() {
           setQuickMessage(data.error || 'Failed');
           return;
         }
-        showToast('Job queued', 'success');
+        showToast('Saved to CiteStack', 'success', {
+          linkUrl: `/items/${data.itemId}`,
+          linkLabel: 'Open item',
+        });
         setQuickInput('');
         router.push(`/items/${data.itemId}`);
       } else {
@@ -170,7 +182,10 @@ export default function NewItemPage() {
           setQuickMessage(data.error || 'Failed');
           return;
         }
-        showToast('Job queued', 'success');
+        showToast('Saved to CiteStack', 'success', {
+          linkUrl: `/items/${data.itemId}`,
+          linkLabel: 'Open item',
+        });
         setQuickInput('');
         router.push(`/items/${data.itemId}`);
       }

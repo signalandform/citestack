@@ -660,6 +660,21 @@ export default function ItemDetailPage() {
           )}
         </div>
 
+        {/* Processing state: prominent when captured or extracted */}
+        {(item.status === 'captured' || item.status === 'extracted') && (
+          <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--draft-muted)] px-4 py-3 text-sm text-[var(--fg-default)]">
+            {item.status === 'captured' ? (
+              <>Extracting… We&apos;re extracting this page.</>
+            ) : (
+              <>Enriching… We&apos;re summarizing and tagging.</>
+            )}
+            {' '}
+            <Link href="/queue" className="text-[var(--accent)] underline hover:no-underline">
+              View queue
+            </Link>
+          </div>
+        )}
+
         {/* Processing timeline */}
         <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-3 text-xs">
           <p className="font-medium text-[var(--fg-default)]">Processing</p>
