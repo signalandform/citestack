@@ -24,9 +24,9 @@ async function extractPdf(buffer: Buffer): Promise<string> {
     const result = await parser.getText();
     await parser.destroy();
     return (result?.text ?? '').trim();
-  } catch {
+  } catch (e) {
     await parser.destroy();
-    throw new Error('Could not parse PDF');
+    throw e;
   }
 }
 
@@ -63,8 +63,10 @@ export async function runExtractFile(
   if (mt === 'application/pdf') {
     try {
       cleanedText = await extractPdf(buffer);
-    } catch {
-      const msg = 'Could not parse PDF';
+    } catch (e) {
+      console.error('PDF extraction failed', e);
+      const realMsg = e instanceof Error ? e.message : String(e);
+      const msg = 'Could not parse PDF: ' + realMsg.slice(0, 200).trim();
       await setItemFailed(admin, itemId, msg);
       return { error: msg };
     }
