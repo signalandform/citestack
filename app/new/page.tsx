@@ -43,12 +43,20 @@ export default function NewItemPage() {
         setUrlMessage(data.error || 'Failed');
         return;
       }
-      showToast('Saved to CiteStack', 'success', {
-        linkUrl: `/items/${data.itemId}`,
-        linkLabel: 'Open item',
-      });
       setUrl('');
-      router.push('/queue');
+      if (data.deduped === true) {
+        showToast('Already in your library', 'success', {
+          linkUrl: `/items/${data.itemId}`,
+          linkLabel: 'Open item',
+        });
+        router.push(`/items/${data.itemId}`);
+      } else {
+        showToast('Saved to CiteStack', 'success', {
+          linkUrl: `/items/${data.itemId}`,
+          linkLabel: 'Open item',
+        });
+        router.push('/queue');
+      }
     } catch {
       setUrlStatus('error');
       setUrlMessage('Network error');
