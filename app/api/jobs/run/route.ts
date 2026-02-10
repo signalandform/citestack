@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getCreditCostEnrich, spendCredits, REASON } from '@/lib/credits';
 import { runExtractUrl } from '@/lib/jobs/extract-url';

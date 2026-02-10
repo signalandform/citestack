@@ -18,16 +18,18 @@ async function setItemFailed(
 }
 
 async function extractPdf(buffer: Buffer): Promise<string> {
-  const { PDFParse } = await import('pdf-parse');
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
-  try {
-    const result = await parser.getText();
-    await parser.destroy();
-    return (result?.text ?? '').trim();
-  } catch (e) {
-    await parser.destroy();
-    throw e;
+  // pdf-parse is usually a function export. Next.js bundling can yield either
+  // a default export or the module itself as the callable.
+  const mod: unknown = await import('pdf-parse');
+  const candidate = (mod as { default?: unknown })?.default ?? mod;
+
+  if (typeof candidate !== 'function') {
+    throw new Error('pdf-parse export is not a function');
   }
+
+  const pdfParse = candidate as (buf: Buffer) => Promise<{ text?: string } | undefined>;
+  const data = await pdfParse(buffer);
+  return (data?.text ?? '').trim();
 }
 
 export async function runExtractFile(
@@ -66,7 +68,7 @@ export async function runExtractFile(
     } catch (e) {
       console.error('PDF extraction failed', e);
       const realMsg = e instanceof Error ? e.message : String(e);
-      const msg = 'Could not parse PDF: ' + realMsg.slice(0, 200).trim();
+      const msg = ('Could not parse PDF: ' + realMsg).slice(0, 240).trim();
       await setItemFailed(admin, itemId, msg);
       return { error: msg };
     }
