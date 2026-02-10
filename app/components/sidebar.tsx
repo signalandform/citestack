@@ -79,7 +79,10 @@ export function Sidebar() {
           ))}
         </div>
       </div>
-      <div className="mt-auto border-t border-[var(--border-default)] p-3">
+      <div className="border-t border-[var(--border-default)] px-3 py-2">
+        <Link href="/account" className={navLinkClass(pathname === '/account')}>
+          Account
+        </Link>
         <button
           type="button"
           onClick={handleSignOut}
