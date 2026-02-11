@@ -2,10 +2,6 @@ import mammoth from 'mammoth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { enqueueEnrichItem } from './enqueue-enrich';
 
-// Ensure Next.js output file tracing includes the optional canvas polyfill used by pdfjs-dist.
-// (pdfjs-dist may require this dynamically; static import ensures it is bundled for serverless.)
-import '@napi-rs/canvas';
-
 async function setItemFailed(
   admin: SupabaseClient,
   itemId: string,
@@ -22,6 +18,18 @@ async function setItemFailed(
 }
 
 async function extractPdf(buffer: Buffer): Promise<string> {
+  // pdf-parse uses pdfjs-dist under the hood. In serverless environments, pdfjs may
+  // try to dynamically load @napi-rs/canvas to polyfill DOMMatrix/ImageData/Path2D.
+  // We load it at runtime (not bundled) so Turbopack doesn't choke on native assets.
+  try {
+    const { createRequire } = await import('module');
+    const require = createRequire(import.meta.url);
+    require('@napi-rs/canvas');
+  } catch {
+    // If canvas can't load, pdfjs-dist may throw DOMMatrix-related errors.
+    // We'll surface that downstream.
+  }
+
   // pdf-parse is usually a function export. Next.js bundling can yield either
   // a default export or the module itself as the callable.
   const mod: unknown = await import('pdf-parse');
