@@ -44,6 +44,7 @@ We use information to:
 - Run background jobs for extraction/enrichment.
 - Improve reliability, prevent abuse, and debug issues.
 - Communicate with you about the Service (support, critical notices).
+- Send product updates, tips, and marketing emails to users who have opted in.
 
 ## 4) AI processing and third parties
 ### 4.1 OpenAI (or other AI providers)
@@ -83,7 +84,7 @@ Depending on your location, you may have rights to:
 - Export your content.
 - Object to or restrict certain processing.
 
-You can delete items/files within the Service. You may request account deletion by contacting us.
+You can delete items/files within the Service. You may request account deletion by contacting us. If you opted in to marketing emails, you can unsubscribe at any time from your Account settings (Marketing emails) or by emailing us at the contact below.
 
 ## 9) Children’s privacy
 CiteStack is not intended for children under **13** (or the minimum age required in your jurisdiction). We primarily expect users to be college students and older. If you believe a child has provided personal information, contact us.
