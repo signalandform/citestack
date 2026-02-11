@@ -201,6 +201,19 @@ export default function AccountPage() {
             <AccountUsageContent usage={usage} />
           ) : null}
         </div>
+
+        <h2 className="mt-8 text-lg font-semibold text-[var(--fg-default)]">Contact support</h2>
+        <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)]">
+          <p className="text-[var(--fg-muted)]">
+            Need help? Email us at{' '}
+            <a
+              href="mailto:jack@signalandformllc.com"
+              className="text-[var(--accent)] underline hover:no-underline"
+            >
+              jack@signalandformllc.com
+            </a>
+          </p>
+        </div>
       </main>
     </AppShell>
   );

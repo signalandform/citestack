@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 function SignUpForm() {
@@ -9,6 +10,8 @@ function SignUpForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [marketingEmails, setMarketingEmails] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -19,11 +22,25 @@ function SignUpForm() {
       setMessage('Passwords do not match');
       return;
     }
+    if (!agreeToTerms) {
+      setStatus('error');
+      setMessage('You must agree to the Terms of Service to sign up.');
+      return;
+    }
     setStatus('loading');
     setMessage('');
     try {
       const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            terms_accepted_at: new Date().toISOString(),
+            marketing_emails: marketingEmails,
+          },
+        },
+      });
       if (error) {
         setStatus('error');
         setMessage(error.message || 'Something went wrong');
@@ -105,12 +122,42 @@ function SignUpForm() {
             className="mt-1 block w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
+
+        <div className="flex items-start gap-2">
+          <input
+            id="agree_terms"
+            type="checkbox"
+            checked={agreeToTerms}
+            onChange={(e) => setAgreeToTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
+          />
+          <label htmlFor="agree_terms" className="text-sm text-[var(--fg-default)]">
+            I agree to the{' '}
+            <Link href="/terms" className="text-[var(--accent)] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+              Terms of Service
+            </Link>
+          </label>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <input
+            id="marketing_emails"
+            type="checkbox"
+            checked={marketingEmails}
+            onChange={(e) => setMarketingEmails(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
+          />
+          <label htmlFor="marketing_emails" className="text-sm text-[var(--fg-default)]">
+            I’d like to receive marketing emails (product updates, tips, offers).
+          </label>
+        </div>
+
         {message && status === 'error' && (
           <p className="text-sm text-[var(--danger)]">{message}</p>
         )}
         <button
           type="submit"
-          disabled={status === 'loading'}
+          disabled={status === 'loading' || !agreeToTerms}
           className="w-full rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
         >
           {status === 'loading' ? 'Signing up…' : 'Sign up'}
