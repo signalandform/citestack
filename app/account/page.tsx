@@ -133,6 +133,8 @@ export default function AccountPage() {
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [usageLoading, setUsageLoading] = useState(true);
   const [usageError, setUsageError] = useState<string | null>(null);
+  const [marketingEmails, setMarketingEmails] = useState<boolean | null>(null);
+  const [marketingSaving, setMarketingSaving] = useState(false);
 
   const fetchUsage = useCallback(() => {
     setUsageLoading(true);
@@ -158,6 +160,27 @@ export default function AccountPage() {
   useEffect(() => {
     fetchUsage();
   }, [fetchUsage]);
+
+  useEffect(() => {
+    fetch('/api/user-settings')
+      .then((r) => (r.ok ? r.json() : { marketing_emails: false }))
+      .then((data) => setMarketingEmails(data.marketing_emails ?? false))
+      .catch(() => setMarketingEmails(false));
+  }, []);
+
+  async function handleMarketingChange(checked: boolean) {
+    setMarketingSaving(true);
+    try {
+      const res = await fetch('/api/user-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marketing_emails: checked }),
+      });
+      if (res.ok) setMarketingEmails(checked);
+    } finally {
+      setMarketingSaving(false);
+    }
+  }
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -188,6 +211,27 @@ export default function AccountPage() {
                 Sign out
               </button>
             </>
+          )}
+        </div>
+
+        <h2 className="mt-8 text-lg font-semibold text-[var(--fg-default)]">Marketing emails</h2>
+        <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)]">
+          {marketingEmails === null ? (
+            <p className="text-[var(--fg-muted)]">Loading…</p>
+          ) : (
+            <div className="flex items-start gap-2">
+              <input
+                id="account_marketing_emails"
+                type="checkbox"
+                checked={marketingEmails}
+                disabled={marketingSaving}
+                onChange={(e) => handleMarketingChange(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
+              />
+              <label htmlFor="account_marketing_emails" className="text-[var(--fg-default)]">
+                I’d like to receive marketing emails (product updates, tips, offers).
+              </label>
+            </div>
           )}
         </div>
 

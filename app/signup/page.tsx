@@ -47,6 +47,11 @@ function SignUpForm() {
         return;
       }
       if (data.session) {
+        await fetch('/api/user-settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ marketing_emails: marketingEmails }),
+        });
         router.push('/library');
         return;
       }
