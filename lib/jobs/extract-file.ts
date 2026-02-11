@@ -34,15 +34,31 @@ async function extractPdf(buffer: Buffer): Promise<string> {
   }
 
   const mod = require('pdf-parse') as unknown;
+
+  // v1.x exported a callable function; v2.x exports a module with a PDFParse class.
   const candidate = (mod as { default?: unknown })?.default ?? mod;
 
-  if (typeof candidate !== 'function') {
-    throw new Error('pdf-parse export is not a function');
+  if (typeof candidate === 'function') {
+    const pdfParse = candidate as (buf: Buffer) => Promise<{ text?: string } | undefined>;
+    const data = await pdfParse(buffer);
+    return (data?.text ?? '').trim();
   }
 
-  const pdfParse = candidate as (buf: Buffer) => Promise<{ text?: string } | undefined>;
-  const data = await pdfParse(buffer);
-  return (data?.text ?? '').trim();
+  const PDFParse = (mod as { PDFParse?: unknown })?.PDFParse;
+  if (typeof PDFParse === 'function') {
+    const parser = new (PDFParse as new () => {
+      load: (buf: Buffer) => Promise<void>;
+      getText: () => Promise<string>;
+      destroy?: () => void | Promise<void>;
+    })();
+
+    await parser.load(buffer);
+    const text = await parser.getText();
+    await parser.destroy?.();
+    return (text ?? '').trim();
+  }
+
+  throw new Error('Unsupported pdf-parse export shape');
 }
 
 export async function runExtractFile(
