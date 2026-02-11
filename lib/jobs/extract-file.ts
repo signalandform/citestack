@@ -48,10 +48,14 @@ async function extractPdf(buffer: Buffer): Promise<string> {
   if (typeof PDFParse === 'function') {
     // pdf-parse@2 exports a PDFParse class which expects options in the constructor.
     // Passing the data buffer here avoids relying on any mutable internal state.
-    const parser = new (PDFParse as new (opts: { data: Uint8Array | Buffer; verbosity?: number }) => {
+    const parser = new (PDFParse as new (opts: {
+      data: Uint8Array | Buffer;
+      verbosity?: number;
+      disableWorker?: boolean;
+    }) => {
       getText: () => Promise<{ text?: string } | { text: string } | { text: string; pages?: unknown[] }>;
       destroy?: () => void | Promise<void>;
-    })({ data: buffer, verbosity: 0 });
+    })({ data: buffer, verbosity: 0, disableWorker: true });
 
     const result = await parser.getText();
     await parser.destroy?.();
