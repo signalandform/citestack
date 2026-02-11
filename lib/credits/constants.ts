@@ -8,6 +8,7 @@ export const REASON = {
   COMPARE_ITEMS: 'compare_items',
   MONTHLY_GRANT: 'monthly_grant',
   ADMIN_GRANT: 'admin_grant',
+  CREDIT_PACK: 'credit_pack',
 } as const;
 
 export type CreditReason = (typeof REASON)[keyof typeof REASON];

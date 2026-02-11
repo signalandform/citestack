@@ -33,6 +33,7 @@ function reasonLabel(reason: string): string {
     compare_items: 'Compare',
     monthly_grant: 'Monthly credits',
     admin_grant: 'Admin grant',
+    credit_pack: 'Credit pack',
   };
   return labels[reason] ?? reason;
 }
