@@ -1,14 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getAdminSecret } from '@/lib/admin-auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-
-function getAdminSecret(request: Request): string | null {
-  const header = request.headers.get('x-citestack-admin-secret');
-  if (header) return header;
-  const auth = request.headers.get('authorization');
-  if (auth?.startsWith('Bearer ')) return auth.slice(7);
-  const url = new URL(request.url);
-  return url.searchParams.get('secret');
-}
 
 export async function POST(request: Request) {
   const secret = getAdminSecret(request);

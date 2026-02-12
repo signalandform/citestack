@@ -100,12 +100,3 @@ export function extractContacts(text: string | null | undefined): ItemContacts {
     usernames: dedupeUsernames(usernames),
   };
 }
-
-export function hasAnyContacts(contacts: ItemContacts): boolean {
-  return (
-    contacts.emails.length > 0 ||
-    contacts.phones.length > 0 ||
-    contacts.addresses.length > 0 ||
-    contacts.usernames.length > 0
-  );
-}

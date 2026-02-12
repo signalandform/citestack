@@ -41,8 +41,7 @@ function formatAccessed(iso: string | null): string {
  */
 export function formatBibliography(
   source: CitationSource,
-  style: CitationStyle,
-  _options?: { accessedAt?: string | null }
+  style: CitationStyle
 ): string {
   const accessed = source.accessedAt ? formatAccessed(source.accessedAt) : '';
   const authorAPA = formatAuthorListAPA(source.authors);
@@ -54,7 +53,6 @@ export function formatBibliography(
       const yearPart = source.year === 'n.d.' ? '(n.d.)' : `(${source.year}).`;
       const titlePart = source.title + '.';
       const sitePart = source.publisher ? ' ' + source.publisher + '.' : '';
-      const urlPart = source.url ? ' ' + source.url : '';
       const retrieved = accessed && source.url
         ? ' Retrieved ' + accessed + ', from ' + source.url
         : source.url

@@ -35,7 +35,6 @@ export function computeCoverage(item: ItemForCoverage): CoverageLevel | null {
   const hasBullets = Array.isArray(item.bullets) && item.bullets.length > 0;
 
   const textStrong = textLen > 2000;
-  const textPartial = textLen >= 500 && textLen <= 2000;
   const textWeak = textLen < 500;
 
   const quotesStrong = quoteCount >= 5;

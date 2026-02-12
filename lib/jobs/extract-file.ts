@@ -1,5 +1,6 @@
 import mammoth from 'mammoth';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logError } from '@/lib/logger';
 import { enqueueEnrichItem } from './enqueue-enrich';
 
 async function setItemFailed(
@@ -101,7 +102,7 @@ export async function runExtractFile(
     try {
       cleanedText = await extractPdf(buffer);
     } catch (e) {
-      console.error('PDF extraction failed', e);
+      logError('extract-file', e, { context: 'PDF extraction failed' });
       const realMsg = e instanceof Error ? e.message : String(e);
       const msg = ('Could not parse PDF: ' + realMsg).slice(0, 240).trim();
       await setItemFailed(admin, itemId, msg);

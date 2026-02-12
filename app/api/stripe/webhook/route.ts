@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
+import { logError } from '@/lib/logger';
 import { getStripe } from '@/lib/stripe/server';
 import {
   getPlanFromPriceId,
@@ -41,7 +43,7 @@ async function syncSubscriptionToUser(
 export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error('[stripe/webhook] Missing STRIPE_WEBHOOK_SECRET');
+    logError('stripe/webhook', new Error('Missing STRIPE_WEBHOOK_SECRET'));
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
   }
 
@@ -62,12 +64,21 @@ export async function POST(request: Request) {
     const stripe = getStripe();
     event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error('[stripe/webhook] Signature verification failed', message);
+    logError('stripe/webhook', err, { context: 'Signature verification failed' });
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
   const admin = supabaseAdmin();
+
+  const { data: existing } = await admin
+    .from('stripe_webhook_events')
+    .select('event_id')
+    .eq('event_id', event.id)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ received: true });
+  }
 
   try {
     switch (event.type) {
@@ -75,7 +86,7 @@ export async function POST(request: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = (session.client_reference_id ?? '').trim();
         if (!userId) {
-          console.error('[stripe/webhook] checkout.session.completed missing client_reference_id');
+          logError('stripe/webhook', new Error('checkout.session.completed missing client_reference_id'));
           break;
         }
         if (session.mode === 'subscription' && session.subscription) {
@@ -105,7 +116,7 @@ export async function POST(request: Request) {
             (sessionWithLines.line_items?.data?.[0]?.price as Stripe.Price)?.id;
           const credits = priceId ? getCreditsForPackPriceId(priceId) : null;
           if (credits == null) {
-            console.error('[stripe/webhook] credit pack unknown price id', priceId);
+            logError('stripe/webhook', new Error('credit pack unknown price id'), { priceId });
             break;
           }
           await ensureUserCredits(admin, userId);
@@ -123,7 +134,7 @@ export async function POST(request: Request) {
             p_amount: credits,
           });
           if (error) {
-            console.error('[stripe/webhook] grant_credits_pack failed', error);
+            logError('stripe/webhook', new Error(error.message), { context: 'grant_credits_pack failed' });
             throw new Error(error.message);
           }
         }
@@ -166,8 +177,14 @@ export async function POST(request: Request) {
       default:
         break;
     }
+
+    await admin.from('stripe_webhook_events').insert({
+      event_id: event.id,
+      processed_at: new Date().toISOString(),
+    });
   } catch (err) {
-    console.error('[stripe/webhook] Handler error', event.type, err);
+    logError('stripe/webhook', err, { eventType: event.type });
+    Sentry.captureException(err);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 

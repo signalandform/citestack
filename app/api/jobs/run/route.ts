@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
+import { getAdminSecret } from '@/lib/admin-auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getCreditCostEnrich, spendCredits, REASON } from '@/lib/credits';
 import { runExtractUrl } from '@/lib/jobs/extract-url';
 import { runExtractFile } from '@/lib/jobs/extract-file';
 import { runEnrichItem } from '@/lib/jobs/enrich-item';
 import { runScreenshotUrl } from '@/lib/jobs/screenshot-url';
-
-function getAdminSecret(request: Request): string | null {
-  const header = request.headers.get('x-citestack-admin-secret');
-  if (header) return header;
-  const auth = request.headers.get('authorization');
-  if (auth?.startsWith('Bearer ')) return auth.slice(7);
-  const url = new URL(request.url);
-  return url.searchParams.get('secret');
-}
 
 async function runJobs(request: Request) {
   const secret = getAdminSecret(request);
@@ -92,15 +84,41 @@ async function runJobs(request: Request) {
     }
 
     const isFailed = !!result.error;
-    await admin
+    const { data: jobRow } = await admin
       .from('jobs')
-      .update({
-        status: isFailed ? 'failed' : 'succeeded',
-        error: isFailed ? result.error : null,
-        result: isFailed ? null : (result as Record<string, unknown>),
-        finished_at: new Date().toISOString(),
-      })
-      .eq('id', job.id);
+      .select('attempts, max_attempts')
+      .eq('id', job.id)
+      .single();
+
+    const attempts = jobRow?.attempts ?? 1;
+    const maxAttempts = jobRow?.max_attempts ?? 3;
+    const shouldRetry = isFailed && attempts < maxAttempts;
+
+    if (shouldRetry) {
+      const backoffMinutes = Math.min(2 ** attempts, 60);
+      const runAfter = new Date(Date.now() + backoffMinutes * 60 * 1000).toISOString();
+      await admin
+        .from('jobs')
+        .update({
+          status: 'queued',
+          started_at: null,
+          run_after: runAfter,
+          error: result.error,
+          result: null,
+          finished_at: null,
+        })
+        .eq('id', job.id);
+    } else {
+      await admin
+        .from('jobs')
+        .update({
+          status: isFailed ? 'failed' : 'succeeded',
+          error: isFailed ? result.error : null,
+          result: isFailed ? null : (result as Record<string, unknown>),
+          finished_at: new Date().toISOString(),
+        })
+        .eq('id', job.id);
+    }
   }
 
   return NextResponse.json({

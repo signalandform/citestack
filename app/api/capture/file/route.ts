@@ -1,7 +1,9 @@
 import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/logger';
 import { getUser } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { addItemToCollection } from '@/lib/collections';
 import {
   getCachedResponse,
   storeResponse,
@@ -112,18 +114,7 @@ export async function POST(request: Request) {
         .eq('id', existing.id);
 
       if (collectionIdTrimmed) {
-        const { data: coll } = await admin
-          .from('collections')
-          .select('id')
-          .eq('id', collectionIdTrimmed)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        if (coll?.id) {
-          await admin.from('collection_items').upsert(
-            { collection_id: collectionIdTrimmed, item_id: existing.id },
-            { onConflict: 'collection_id,item_id' }
-          );
-        }
+        await addItemToCollection(admin, user.id, existing.id, collectionIdTrimmed);
       }
 
       const responseBody = {
@@ -170,18 +161,7 @@ export async function POST(request: Request) {
             .update({ last_saved_at: now, updated_at: now })
             .eq('id', existingByHash.id);
           if (collectionIdTrimmed) {
-            const { data: coll } = await admin
-              .from('collections')
-              .select('id')
-              .eq('id', collectionIdTrimmed)
-              .eq('user_id', user.id)
-              .maybeSingle();
-            if (coll?.id) {
-              await admin.from('collection_items').upsert(
-                { collection_id: collectionIdTrimmed, item_id: existingByHash.id },
-                { onConflict: 'collection_id,item_id' }
-              );
-            }
+            await addItemToCollection(admin, user.id, existingByHash.id, collectionIdTrimmed);
           }
           const responseBody = {
             itemId: existingByHash.id,
@@ -195,7 +175,7 @@ export async function POST(request: Request) {
         }
       }
       const message = itemError?.message ?? 'Unknown error';
-      console.error('[capture/file] items insert failed', { itemError, userId: user.id });
+      logError('capture/file', itemError, { userId: user.id, context: 'items insert failed' });
       return NextResponse.json(
         { error: 'Could not create item', details: message },
         { status: 500 }
@@ -244,7 +224,7 @@ export async function POST(request: Request) {
 
     if (jobError) {
       const message = jobError?.message ?? 'Unknown error';
-      console.error('[capture/file] jobs insert failed', { jobError, itemId: item.id });
+      logError('capture/file', jobError, { itemId: item.id, context: 'jobs insert failed' });
       return NextResponse.json(
         { error: 'Could not enqueue job', details: message },
         { status: 500 }
@@ -252,18 +232,7 @@ export async function POST(request: Request) {
     }
 
     if (collectionIdTrimmed) {
-      const { data: coll } = await admin
-        .from('collections')
-        .select('id')
-        .eq('id', collectionIdTrimmed)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (coll?.id) {
-        await admin.from('collection_items').upsert(
-          { collection_id: collectionIdTrimmed, item_id: item.id },
-          { onConflict: 'collection_id,item_id' }
-        );
-      }
+      await addItemToCollection(admin, user.id, item.id, collectionIdTrimmed);
     }
 
     const responseBody = {
@@ -277,7 +246,7 @@ export async function POST(request: Request) {
     return NextResponse.json(responseBody, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[capture/file] unexpected error', { err });
+    logError('capture/file', err);
     return NextResponse.json(
       { error: 'An unexpected error occurred', details: message },
       { status: 500 }

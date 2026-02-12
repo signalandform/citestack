@@ -1,6 +1,7 @@
 import { Readability } from '@mozilla/readability';
 import { parseHTML } from 'linkedom';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isBlockedUrl } from '@/lib/url/blocklist';
 import { enqueueEnrichItem } from './enqueue-enrich';
 
 const FETCH_TIMEOUT_MS = 15000;
@@ -35,6 +36,12 @@ export async function runExtractUrl(
     .single();
 
   if (itemErr || !item) return { error: 'Item not found' };
+
+  if (isBlockedUrl(url)) {
+    const msg = 'URL not allowed';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
 
   let html: string;
   try {

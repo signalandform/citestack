@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isBlockedUrl } from '@/lib/url/blocklist';
 
 const MICROLINK_TIMEOUT_MS = 30000;
 
@@ -21,6 +22,8 @@ export async function runScreenshotUrl(
 
   const url = payloadUrl ?? item.url;
   if (!url?.trim()) return {};
+
+  if (isBlockedUrl(url)) return { error: 'URL not allowed' };
 
   const base = process.env.MICROLINK_API_KEY
     ? 'https://pro.microlink.io'

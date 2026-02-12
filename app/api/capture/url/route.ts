@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/logger';
 import { getUser } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { addItemToCollection } from '@/lib/collections';
 import { canonicalizeUrl } from '@/lib/url';
+import { isBlockedUrl } from '@/lib/url/blocklist';
 import {
   getCachedResponse,
   storeResponse,
@@ -41,6 +44,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
 
+  if (isBlockedUrl(url)) {
+    return NextResponse.json({ error: 'URL not allowed' }, { status: 400 });
+  }
+
   const collectionId =
     typeof body.collectionId === 'string' ? body.collectionId.trim() : undefined;
 
@@ -61,18 +68,7 @@ export async function POST(request: Request) {
       .eq('id', existing.id);
 
     if (collectionId) {
-      const { data: coll } = await admin
-        .from('collections')
-        .select('id')
-        .eq('id', collectionId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (coll?.id) {
-        await admin.from('collection_items').upsert(
-          { collection_id: collectionId, item_id: existing.id },
-          { onConflict: 'collection_id,item_id' }
-        );
-      }
+      await addItemToCollection(admin, user.id, existing.id, collectionId);
     }
 
     const responseBody = {
@@ -101,7 +97,7 @@ export async function POST(request: Request) {
 
   if (itemError || !item) {
     const message = itemError?.message ?? 'Unknown error';
-    console.error('[capture/url] items insert failed', { itemError, userId: user.id });
+    logError('capture/url', itemError, { userId: user.id, context: 'items insert failed' });
     return NextResponse.json(
       { error: 'Could not create item', details: message },
       { status: 500 }
@@ -118,7 +114,7 @@ export async function POST(request: Request) {
 
   if (jobError) {
     const message = jobError?.message ?? 'Unknown error';
-    console.error('[capture/url] jobs insert failed', { jobError, itemId: item.id });
+    logError('capture/url', jobError, { itemId: item.id, context: 'jobs insert failed' });
     return NextResponse.json(
       { error: 'Could not enqueue job', details: message },
       { status: 500 }
@@ -126,18 +122,7 @@ export async function POST(request: Request) {
   }
 
   if (collectionId) {
-    const { data: coll } = await admin
-      .from('collections')
-      .select('id')
-      .eq('id', collectionId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    if (coll?.id) {
-      await admin.from('collection_items').upsert(
-        { collection_id: collectionId, item_id: item.id },
-        { onConflict: 'collection_id,item_id' }
-      );
-    }
+    await addItemToCollection(admin, user.id, item.id, collectionId);
   }
 
   const responseBody = {

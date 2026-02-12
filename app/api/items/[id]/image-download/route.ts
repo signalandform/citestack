@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUser } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { isBlockedUrl } from '@/lib/url/blocklist';
 
 const FETCH_TIMEOUT_MS = 15000;
 
@@ -47,6 +48,10 @@ export async function GET(
   const allowed = Array.isArray(item.image_urls) && item.image_urls.includes(url.trim());
   if (!allowed) {
     return NextResponse.json({ error: 'Image not found for this item' }, { status: 404 });
+  }
+
+  if (isBlockedUrl(url)) {
+    return NextResponse.json({ error: 'URL not allowed' }, { status: 400 });
   }
 
   let res: Response;

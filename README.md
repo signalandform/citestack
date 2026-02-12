@@ -15,10 +15,12 @@ Citation-first research library (save → summarize → search → cite).
 npm install
 ```
 
-2) Create `.env.local` from `.env.example`
+2) Create `.env.local` from `.env.example` and fill in values:
 ```bash
 cp .env.example .env.local
 ```
+
+**Required env vars:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `CITESTACK_ADMIN_SECRET`. For billing: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and price IDs. See [docs/RUNBOOK.md](docs/RUNBOOK.md) for full list.
 
 3) Run
 ```bash
@@ -42,7 +44,4 @@ The Privacy Policy, Terms of Service, and Acceptable Use Policy live in the repo
 Formatted citations (APA 7, MLA 9, Chicago) and exports (BibTeX, RIS, CSL-JSON) are available per item and for multi-selected items in the library. See [docs/citations.md](docs/citations.md) for how formatting works, data sourcing, and limitations.
 
 ## Notes
-This repo is an initial scaffold. Next steps:
-- Invite-code gated signup (server route + tables)
-- Capture flows: URL / paste / file upload
-- Async job runner (simple `jobs` table + cron-triggered worker endpoint)
+See [docs/RUNBOOK.md](docs/RUNBOOK.md) for deployment, migrations, and operations.

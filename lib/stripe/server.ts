@@ -1,6 +1,5 @@
 import Stripe from 'stripe';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { ensureUserCredits } from '@/lib/credits/ensure';
 
 let stripeInstance: Stripe | null = null;
 

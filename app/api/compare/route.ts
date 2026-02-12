@@ -111,9 +111,15 @@ export async function POST(request: Request) {
     quotes: quotesByItem.get(i.id) ?? [],
   }));
 
-  const { result, error: compareError } = await runCompareItems(itemsForCompare);
+  const compareResult = await runCompareItems(itemsForCompare);
+  const { result, error: compareError } = compareResult;
 
   if (compareError || !result) {
+    await admin.rpc('grant_credits_refund', {
+      p_user_id: user.id,
+      p_amount: cost,
+      p_reason: 'compare_refund',
+    });
     return NextResponse.json(
       { error: compareError ?? 'Comparison failed' },
       { status: 500 }
@@ -131,7 +137,15 @@ export async function POST(request: Request) {
     .single();
 
   if (insertErr || !comparison) {
-    return NextResponse.json({ error: 'Could not save comparison' }, { status: 500 });
+    await admin.rpc('grant_credits_refund', {
+      p_user_id: user.id,
+      p_amount: cost,
+      p_reason: 'compare_refund',
+    });
+    return NextResponse.json(
+      { error: 'Could not save comparison' },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({
